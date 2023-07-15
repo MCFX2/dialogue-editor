@@ -1,0 +1,114 @@
+
+.sidebar {
+	background-color: #0b0928c0;
+	backdrop-filter: blur(4px);
+	color: #8ba1b7;
+}
+
+.sidebarContainer {
+	@extend .sidebar;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.disableColor {
+	&:disabled{
+		color: #3e5e7e;
+	}
+}
+
+.icon {
+	@extend .disableColor;
+	color: '#59d0ff';
+}
+
+.sidebarMenu {
+	@extend .disableColor;
+	color: #082440;
+
+	&:hover {
+		background-color: #00458b;
+		color: #b6c8d9;
+	}
+}
+
+.sidebarFooter {
+	width: 50%;
+	min-width: 64px;
+	height: 64px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+	border-radius: 4px;
+	color: white;
+	background: linear-gradient(45deg, rgb(61 61 180) 0%, rgb(255 95 60) 100%);
+
+	&:hover {
+		background: linear-gradient(45deg, rgb(80 80 200) 0%, rgb(255 87 61) 100%);
+	}
+}
+
+.sidebarHeader {
+	height: 64px;
+	min-height: 64px;
+	display: flex;
+	align-items: center;
+	padding: 0 20px;
+  
+	margin-bottom: 24px;
+	margin-top: 16px;
+  
+	> div {
+	  width: 100%;
+	  overflow: hidden;
+	}
+}
+
+.headerLogo {
+	width: 35px;
+	min-width: 35px;
+	height: 35px;
+	min-height: 35px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 8px;
+	color: white;
+	font-size: 24px;
+	font-weight: 700;
+	background-color: #009fdb;
+	background: linear-gradient(45deg, rgb(61 61 180) 0%, rgb(255 95 60) 100%);
+	margin-right: 10px;
+	margin-left: 4px;
+}
+
+.defaultText {
+	margin: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.legalText {
+	@extend .defaultText;
+	font-size: 12px;
+	font-weight: 400;
+	color: #8ba1b7;
+}
+
+.subtitle {
+	@extend .defaultText;
+	font-size: 20px; 
+	line-height: 30px;
+	font-weight: 700;
+}
+
+.bodyText {
+	@extend .defaultText;
+	font-size: 12px; 
+	line-height: 18px;
+	font-weight: 600;
+}

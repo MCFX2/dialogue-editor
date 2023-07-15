@@ -1,0 +1,12 @@
+export declare const bodyText: string;
+export declare const defaultText: string;
+export declare const disableColor: string;
+export declare const headerLogo: string;
+export declare const icon: string;
+export declare const legalText: string;
+export declare const sidebar: string;
+export declare const sidebarContainer: string;
+export declare const sidebarFooter: string;
+export declare const sidebarHeader: string;
+export declare const sidebarMenu: string;
+export declare const subtitle: string;
