@@ -1,0 +1,14 @@
+.cmbr {
+    margin-left: auto;
+
+    &:hover {
+        color: orange;
+    }
+}
+
+.icon {
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+/* #6E654C */

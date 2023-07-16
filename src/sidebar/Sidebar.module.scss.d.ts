@@ -1,3 +1,4 @@
+export declare const badge: string;
 export declare const bodyText: string;
 export declare const defaultText: string;
 export declare const disableColor: string;
@@ -8,5 +9,7 @@ export declare const sidebar: string;
 export declare const sidebarContainer: string;
 export declare const sidebarFooter: string;
 export declare const sidebarHeader: string;
+export declare const sidebarMainSection: string;
 export declare const sidebarMenu: string;
+export declare const sidebarObject: string;
 export declare const subtitle: string;

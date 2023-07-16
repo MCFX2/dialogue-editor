@@ -3,6 +3,8 @@
 	background-color: #0b0928c0;
 	backdrop-filter: blur(4px);
 	color: #8ba1b7;
+
+	user-select: none;
 }
 
 .sidebarContainer {
@@ -48,6 +50,7 @@
 
 	&:hover {
 		background: linear-gradient(45deg, rgb(80 80 200) 0%, rgb(255 87 61) 100%);
+		cursor: pointer;
 	}
 }
 
@@ -83,6 +86,8 @@
 	background: linear-gradient(45deg, rgb(61 61 180) 0%, rgb(255 95 60) 100%);
 	margin-right: 10px;
 	margin-left: 4px;
+
+	user-select: none;
 }
 
 .defaultText {
@@ -90,6 +95,7 @@
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+	user-select: none;
 }
 
 .legalText {
@@ -111,4 +117,32 @@
 	font-size: 12px; 
 	line-height: 18px;
 	font-weight: 600;
+}
+
+.badge {
+	min-width: 18px;
+	min-height: 18px;
+	display: flex;
+	justify-content: center;
+	border-radius: 2px;
+	font-size: 11px;
+	font-weight: 600;
+	margin: 0 8px;
+	padding: 0px 0px 1px 0px;
+	background-color: #fb3939;
+	color: #eee;
+
+	user-select: none;
+}
+
+.sidebarMainSection {
+	user-select: none;
+	flex: 1;
+	margin-bottom: 32px;
+}
+
+.sidebarObject {
+	border-right-width: 2px;
+	border-color: #00254b;
+	user-select: none;
 }

@@ -1,6 +1,7 @@
 import { AppSidebar } from "./sidebar/Sidebar";
 import styles from "./App.module.scss";
 import { useEffect, useState } from "react";
+import { ResizableWindow } from "./components/Resize/ResizableWindow";
 
 async function enumerateDirectories(dir: FileSystemDirectoryHandle) {
   const results = [];
@@ -12,77 +13,56 @@ async function enumerateDirectories(dir: FileSystemDirectoryHandle) {
 }
 
 function App() {
-  const [directory, setDirectory] = useState<FileSystemDirectoryHandle | null>(
-    null
-  );
+  const [worldPosition, setWorldPosition] = useState({ x: 0, y: 0 });
+  const [grabbing, setGrabbing] = useState(false);
+  const worldSize = { width: 2160, height: 1528};
+  const [zoomLevel, setZoomLevel] = useState(1);
 
-  const [directoryContents, setDirectoryContents] = useState<
-    (FileSystemDirectoryHandle | FileSystemFileHandle)[]
-  >([]);
-  const [firstDirectoryContents, setFirstDirectoryContents] =
-    useState<string>("");
-  const [firstDirectoryName, setFirstDirectoryName] = useState<string>("");
-  
-  useEffect(() => {
-    async function getDirectory(parentDir: FileSystemDirectoryHandle) {
-      const dir = await enumerateDirectories(parentDir);
-      setDirectoryContents(dir);
-    }
-    if (directory) getDirectory(directory);
-  }, [directory]);
+  const clampBgPosition = (x: number, y: number) => {
+    const { width, height } = worldSize;
+    while (x < -width) x += width;
+    while (x > width) x -= width;
+    while (y < -height) y += height;
+    while (y > height) y -= height;
+    return { x, y };
+  };
 
+  // click and drag to move the background
   useEffect(() => {
-    async function readFileContents(file: FileSystemFileHandle) {
-      const content = await file.getFile();
-      setFirstDirectoryContents(await content.text());
-      setFirstDirectoryName(file.name);
-    }
-    const firstFile = directoryContents.find((e) => e.kind === "file");
-    if (firstFile) readFileContents(firstFile as FileSystemFileHandle);
-  }, [directoryContents]);
+    const onMouseMove = (e: MouseEvent) => {
+      if (grabbing) {
+        setWorldPosition((prev) => ({
+          x: prev.x + e.movementX,
+          y: prev.y + e.movementY,
+        }));
+      }
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    return () => window.removeEventListener("mousemove", onMouseMove);
+  }, [grabbing]);
+
+  const bgPos = clampBgPosition(worldPosition.x, worldPosition.y);
 
   return (
     <>
       <div className={styles.appBgContainer}>
-        <div className={styles.wholeAppBg} />
+        <div
+          className={styles.wholeAppBg}
+          style={{
+            transform: `translate(${bgPos.x}px, ${bgPos.y}px)`,
+            backgroundSize: `${worldSize.width * zoomLevel}px ${
+              worldSize.height * zoomLevel
+            }px`,
+          }}
+        />
       </div>
       <div className={styles.wholeAppContainer}>
         <AppSidebar />
         <main>
-          <div>
-            <button
-              onClick={() => {
-                window.showDirectoryPicker().then((dir) => {
-                  console.log(dir.name);
-                  setDirectory(dir);
-                });
-              }}
-            >
-              {directory ? (
-                <p>
-                  Your browser seems to be usable. Nice. You chose the{" "}
-                  {directory.name} folder, right?
-                </p>
-              ) : (
-                <p>
-                  Click here to see if your browser is actually half-decent.
-                </p>
-              )}
-            </button>
-            <p>Note this part of the site really sucks. i made it in 10 minutes because i need a sanity check before i proceed with this plan</p>
-
-            {directory && directoryContents.length > 0 && (
-              <>
-                <p>Here's what I see in that folder:</p>
-                {directoryContents.map((e) => (
-                  <p>{e.name}</p>
-                ))}
-                <p>Here's the contents of the first file ({firstDirectoryName}):</p>
-                {firstDirectoryContents && (
-                  <code>{firstDirectoryContents}</code>
-                )}
-              </>
-            )}
+          <div className={styles.mainContainer} onClick={() => {}}>
+            <ResizableWindow>
+              <p>This is a node, someday.</p>
+            </ResizableWindow>
           </div>
         </main>
       </div>

@@ -1,0 +1,37 @@
+.resizeEdgeContainer {
+	display: flex;
+	flex-grow: inherit;
+	position: absolute;
+	justify-content: center;
+}
+
+.resizeTitlebar {
+	border: 2px solid black;
+	background-color: rgba(26, 21, 21, 0.9);
+	display: flex;
+	cursor: move;
+}
+
+.resizeWindow {
+	display: flex;
+	flex-direction: column;
+	position: absolute;
+}
+
+.resizeWindowCenter {
+	display: flex;
+	height: inherit;
+}
+
+.resizeWindowVisibleContainer {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.resizeWindowContentContainer {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	background-color: rgba(26, 21, 21, 0.5);
+}
