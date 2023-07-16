@@ -76,7 +76,7 @@ function App() {
                 {directoryContents.map((e) => (
                   <p>{e.name}</p>
                 ))}
-                <p>Here's the contents of the first file:</p>
+                <p>Here's the contents of the first file ({firstDirectoryName}):</p>
                 {firstDirectoryContents && (
                   <code>{firstDirectoryContents}</code>
                 )}
