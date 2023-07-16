@@ -28,6 +28,7 @@ export const AppSidebar: React.FC = () => {
         toggled={toggled}
         onBackdropClick={() => setToggled(false)}
         image="/tex_bg_sb.png"
+        style={{ borderRight: '2px solid #00254b' }} // very annoyed i have to do this btw
         className={styles.sidebarObject}
       >
         <div className={styles.sidebarContainer}>
@@ -38,7 +39,7 @@ export const AppSidebar: React.FC = () => {
                 Nodedit
               </p>
             </div>
-          </div>{" "}
+          </div>
           <div className={styles.sidebarMainSection}>
             <div style={{ padding: "0 24px", marginBottom: "8px" }}>
               <p

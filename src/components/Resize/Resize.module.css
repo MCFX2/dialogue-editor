@@ -7,7 +7,7 @@
 
 .resizeTitlebar {
 	border: 2px solid black;
-	background-color: rgba(26, 21, 21, 0.9);
+	background: linear-gradient(45deg, rgb(61 61 180) 0%, rgb(255 95 60) 100%);
 	display: flex;
 	cursor: move;
 }
@@ -33,5 +33,7 @@
 	width: 100%;
 	display: flex;
 	flex-direction: column;
-	background-color: rgba(26, 21, 21, 0.5);
+	background: linear-gradient(45deg, rgba(15, 15, 45, 0.55) 0%, rgba(63, 25, 15, 0.55) 100%);
+
+	box-shadow: inset 0px 0px 0px 1px black;
 }

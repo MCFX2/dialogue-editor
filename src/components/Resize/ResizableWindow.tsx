@@ -2,7 +2,7 @@ import { useWindowSize } from "../Window/UseWindowSize";
 import { useState } from "react";
 import { ResizeEdgeContainer, ResizeEdgeSide } from "./ResizeEdge";
 import { ResizableTitlebar } from "./ResizeTitlebar";
-import styles from './Resize.module.css';
+import styles from "./Resize.module.css";
 import { ExpandCollapseButton } from "../ExpandCollapseButton/ExpandCollapseButton";
 
 export interface ResizableWindowProps {
@@ -17,19 +17,22 @@ export interface ResizableWindowProps {
 	allowCollapse?: boolean;
 	defaultCollapsed?: boolean;
 
-
 	displayResizeHint?: boolean;
 	isWindowFocused?: boolean;
 
 	defaultXPos?: number;
 	defaultYPos?: number;
 
+	allowOutOfBounds?: boolean;
+
+	allowVerticalResize?: boolean;
+	allowHorizontalResize?: boolean;
+
 	onMouseEnter?: () => void;
 	onMouseLeave?: () => void;
 
-
 	children?: any;
-};
+}
 
 export const ResizableWindow = ({
 	minWidth = 400,
@@ -37,12 +40,9 @@ export const ResizableWindow = ({
 	minHeight = 200,
 	maxHeight = Infinity,
 	titlebarHeight = 32,
-	// displayResizeHintOnFocus
-	displayResizeHint = false,
-	isWindowFocused = false,
 
-	onMouseEnter = () => { },
-	onMouseLeave	= () => { },
+	onMouseEnter = () => {},
+	onMouseLeave = () => {},
 
 	defaultHeight = minHeight,
 	defaultWidth = minWidth,
@@ -50,26 +50,40 @@ export const ResizableWindow = ({
 	defaultCollapsed = false,
 	defaultXPos = 0,
 	defaultYPos = 0,
-	children
-}: ResizableWindowProps) => {
+	allowOutOfBounds = false,
+	allowHorizontalResize = true,
+	allowVerticalResize = true,
 
+	children,
+}: ResizableWindowProps) => {
 	const minCollapsedWidth = minWidth;
 	const maxCollapsedWidth = maxWidth;
 
 	// the lesser of the two constraints
-	const realMaxWidth = (maxWidth > window.innerWidth) ? window.innerWidth : maxWidth;
-	const realMaxHeight = (maxHeight > window.innerHeight) ? window.innerHeight : maxHeight;
+	const realMaxWidth = allowOutOfBounds
+		? maxWidth
+		: maxWidth > window.innerWidth
+		? window.innerWidth
+		: maxWidth;
+	const realMaxHeight = allowOutOfBounds
+		? maxHeight
+		: maxHeight > window.innerHeight
+		? window.innerHeight
+		: maxHeight;
 
 	// todo: load layout/size preference from config or something
 
-	const [viewportSize, setViewportSize] = useState({ x: window.innerWidth, y: window.innerHeight });
+	const [viewportSize, setViewportSize] = useState({
+		x: window.innerWidth,
+		y: window.innerHeight,
+	});
 
 	const onViewportSizeChange = () => {
 		requestWindowLayout({
 			pos: {
 				x: windowLayout.position.x * (window.innerWidth / viewportSize.x),
-				y: windowLayout.position.y * (window.innerHeight / viewportSize.y)
-			}
+				y: windowLayout.position.y * (window.innerHeight / viewportSize.y),
+			},
 		});
 
 		setViewportSize({ x: window.innerWidth, y: window.innerHeight });
@@ -77,7 +91,7 @@ export const ResizableWindow = ({
 
 	const clamp = (input: number, min: number, max: number) => {
 		return Math.min(Math.max(input, min), max);
-	}
+	};
 
 	useWindowSize(onViewportSizeChange);
 
@@ -85,17 +99,21 @@ export const ResizableWindow = ({
 	const [windowLayout, setWindowLayout] = useState({
 		size: {
 			x: clamp(defaultWidth, minWidth, window.innerWidth),
-			y: defaultHeight
+			y: defaultHeight,
 		},
 		collapsedSize: {
 			x: clamp(defaultWidth, minCollapsedWidth, maxCollapsedWidth),
-			y: titlebarHeight // titlebar height can't change
+			y: titlebarHeight, // titlebar height can't change
 		},
 		position: {
-			x: clamp(defaultXPos, 0, window.innerWidth - defaultWidth),
-			y: clamp(defaultYPos, 0, window.innerHeight - defaultHeight)
+			x: allowOutOfBounds
+				? defaultXPos
+				: clamp(defaultXPos, 0, window.innerWidth - defaultWidth),
+			y: allowOutOfBounds
+				? defaultYPos
+				: clamp(defaultYPos, 0, window.innerHeight - defaultHeight),
 		},
-		isCollapsed: defaultCollapsed
+		isCollapsed: defaultCollapsed,
 	});
 
 	const requestCollapse = () => {
@@ -106,112 +124,150 @@ export const ResizableWindow = ({
 				// technically the Y here is out of bounds, but we assume it'll be clamped
 				requestWindowLayout({
 					pos: { x: windowLayout.position.x, y: viewportSize.y },
-					collapsed: true
+					collapsed: true,
 				});
-			}
-			else {
+			} else {
 				requestWindowLayout({ collapsed: true });
 			}
 		} else {
 			// simply re-request the current layout and we guarantee a valid position
 			requestWindowLayout({ collapsed: false });
 		}
-	}
+	};
 
 	const requestWindowLayout = ({
 		pos = windowLayout.position,
 		size = windowLayout.size,
-		collapsed = windowLayout.isCollapsed
+		collapsed = windowLayout.isCollapsed,
 	}) => {
 		const finalSize = {
 			x: clamp(size.x, minWidth, realMaxWidth),
 			// don't allow vertical resizing when collapsed
 			// todo: track the attempted change so we can auto-collapse/uncollapse at the right time
-			y: collapsed ? windowLayout.size.y : clamp(size.y, minHeight, realMaxHeight)
+			y: collapsed
+				? windowLayout.size.y
+				: clamp(size.y, minHeight, realMaxHeight),
 		};
 
 		const finalPos = {
-			x: clamp(pos.x, 0, window.innerWidth - finalSize.x),
-			y: clamp(pos.y, 0, window.innerHeight - (collapsed ? titlebarHeight : finalSize.y))
-		}
+			x: allowOutOfBounds ? pos.x : clamp(pos.x, 0, window.innerWidth - finalSize.x),
+			y: allowOutOfBounds ? pos.y : clamp(
+				pos.y,
+				0,
+				window.innerHeight - (collapsed ? titlebarHeight : finalSize.y)
+			),
+		};
 
 		setWindowLayout({
 			position: finalPos,
 			size: finalSize,
 			collapsedSize: {
 				x: finalSize.x,
-				y: titlebarHeight
+				y: titlebarHeight,
 			},
-			isCollapsed: collapsed
-		})
-	}
+			isCollapsed: collapsed,
+		});
+	};
 
 	// returns what the size would be if you'd called requestWindowLayout with the specified size
-	const getValidatedSize = (size: { x: number, y: number }) => {
+	const getValidatedSize = (size: { x: number; y: number }) => {
 		return {
 			x: clamp(size.x, minWidth, realMaxWidth),
 			// todo: track the attempted change so we can auto-collapse/uncollapse at the right time
-			y: windowLayout.isCollapsed ? windowLayout.size.y : clamp(size.y, minHeight, realMaxHeight)
+			y: windowLayout.isCollapsed
+				? windowLayout.size.y
+				: clamp(size.y, minHeight, realMaxHeight),
 		};
-	}
+	};
 
 	let windowLayoutCss = {
-		width: `${(windowLayout.isCollapsed ? windowLayout.collapsedSize : windowLayout.size).x}px`,
-		height: `${(windowLayout.isCollapsed ? windowLayout.collapsedSize : windowLayout.size).y}px`,
+		width: `${
+			(windowLayout.isCollapsed
+				? windowLayout.collapsedSize
+				: windowLayout.size
+			).x
+		}px`,
+		height: `${
+			(windowLayout.isCollapsed
+				? windowLayout.collapsedSize
+				: windowLayout.size
+			).y
+		}px`,
 		left: `${windowLayout.position.x}px`,
 		top: `${windowLayout.position.y}px`,
 	};
 
 	let contentAreaCss = {
-		height: windowLayout.isCollapsed ? 0 : `${windowLayout.size.y - titlebarHeight}px`
+		height: windowLayout.isCollapsed
+			? 0
+			: `${windowLayout.size.y - titlebarHeight}px`,
 	};
 
 	return (
-		<div className={styles.resizeWindow} style={windowLayoutCss} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} >
-			{!windowLayout.isCollapsed && <ResizeEdgeContainer
-				side={ResizeEdgeSide.Top}
-				includeCorners
-				setWindowLayout={requestWindowLayout}
-				windowSize={windowLayout.size}
-				windowPos={windowLayout.position}
-				getValidatedSize={getValidatedSize}
-			/>}
-			<div className={styles.resizeWindowCenter}>
+		<div
+			className={styles.resizeWindow}
+			style={windowLayoutCss}
+			onMouseEnter={onMouseEnter}
+			onMouseLeave={onMouseLeave}
+		>
+			{allowVerticalResize && !windowLayout.isCollapsed && (
 				<ResizeEdgeContainer
+					side={ResizeEdgeSide.Top}
+					includeCorners
+					setWindowLayout={requestWindowLayout}
+					windowSize={windowLayout.size}
+					windowPos={windowLayout.position}
+					getValidatedSize={getValidatedSize}
+				/>
+			)}
+			<div className={styles.resizeWindowCenter}>
+				{allowHorizontalResize && <ResizeEdgeContainer
 					side={ResizeEdgeSide.Left}
 					setWindowLayout={requestWindowLayout}
 					windowSize={windowLayout.size}
 					windowPos={windowLayout.position}
 					getValidatedSize={getValidatedSize}
-				/>
+				/>}
 				<div className={styles.resizeWindowVisibleContainer}>
-
 					<ResizableTitlebar
 						setWindowLayout={requestWindowLayout}
 						windowPos={windowLayout.position}
 						height={titlebarHeight}
 					>
-						{displayResizeHint && <h2 className="text-rsbrown text-lg ml-[35%] ">DRAG TO RESIZE OR EXPAND</h2>}
-						{allowCollapse && <ExpandCollapseButton onClick={requestCollapse} isCollapsed={windowLayout.isCollapsed} />}
+						{allowCollapse && (
+							<ExpandCollapseButton
+								onClick={requestCollapse}
+								isCollapsed={windowLayout.isCollapsed}
+							/>
+						)}
 					</ResizableTitlebar>
-					{!windowLayout.isCollapsed && <div className={styles.resizeWindowContentContainer} style={contentAreaCss}>{children}</div>}
+					{!windowLayout.isCollapsed && (
+						<div
+							className={styles.resizeWindowContentContainer}
+							style={contentAreaCss}
+						>
+							{children}
+						</div>
+					)}
 				</div>
-				<ResizeEdgeContainer
+				{allowHorizontalResize && <ResizeEdgeContainer
 					side={ResizeEdgeSide.Right}
 					setWindowLayout={requestWindowLayout}
 					windowSize={windowLayout.size}
 					windowPos={windowLayout.position}
 					getValidatedSize={getValidatedSize}
-				/>
+				/>}
 			</div>
-			<ResizeEdgeContainer
-				side={ResizeEdgeSide.Bottom}
-				includeCorners
-				setWindowLayout={requestWindowLayout}
-				windowSize={windowLayout.size}
-				windowPos={windowLayout.position}
-				getValidatedSize={getValidatedSize}
-			/>
+			{allowVerticalResize && (
+				<ResizeEdgeContainer
+					side={ResizeEdgeSide.Bottom}
+					includeCorners
+					setWindowLayout={requestWindowLayout}
+					windowSize={windowLayout.size}
+					windowPos={windowLayout.position}
+					getValidatedSize={getValidatedSize}
+				/>
+			)}
 		</div>
 	);
 };

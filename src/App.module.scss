@@ -8,6 +8,8 @@
   background-color: #013d7901;
   backdrop-filter: blur(4px);
 
+  overflow: hidden;
+
   &:hover {
     cursor: grab;
   }
