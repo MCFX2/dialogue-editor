@@ -69,6 +69,7 @@ function App() {
                 </p>
               )}
             </button>
+            <p>Note this part of the site really sucks. i made it in 10 minutes because i need a sanity check before i proceed with this plan</p>
 
             {directory && directoryContents.length > 0 && (
               <>

@@ -102,46 +102,41 @@ export const AppSidebar: React.FC = () => {
                 className={styles.bodyText}
                 style={{ opacity: collapsed ? 0 : 0.7, letterSpacing: "0.5px" }}
               >
-                General
+                Category 1 (Submenus)
               </p>
             </div>
             <Menu menuItemStyles={menuItemStyles}>
               <SubMenu
-                label="Charts"
+                label="pinged by @everyone"
                 suffix={
                   <Badge variant="danger" shape="circle">
-                    6
+                    3
                   </Badge>
                 }
               >
-                <MenuItem> Pie charts</MenuItem>
-                <MenuItem> Line charts</MenuItem>
-                <MenuItem> Bar charts</MenuItem>
+                <MenuItem>Option 1</MenuItem>
+                <MenuItem>Option B</MenuItem>
+                <MenuItem>Squirrel</MenuItem>
               </SubMenu>
-              <SubMenu label="Maps">
-                <MenuItem> Google maps</MenuItem>
-                <MenuItem> Open street maps</MenuItem>
+              <SubMenu label="Do-nothing buttons">
+                <MenuItem>Activate cheat mode</MenuItem>
+                <MenuItem>Find a bite to eat?</MenuItem>
               </SubMenu>
-              <SubMenu label="Theme">
-                <MenuItem> Dark</MenuItem>
-                <MenuItem> Light</MenuItem>
+              <SubMenu label="Useless buttons">
+                <MenuItem>A</MenuItem>
+                <MenuItem>B</MenuItem>
               </SubMenu>
-              <SubMenu label="Components">
-                <MenuItem> Grid</MenuItem>
-                <MenuItem> Layout</MenuItem>
-                <SubMenu label="Forms">
-                  <MenuItem> Input</MenuItem>
-                  <MenuItem> Select</MenuItem>
-                  <SubMenu label="More">
-                    <MenuItem> CheckBox</MenuItem>
-                    <MenuItem> Radio</MenuItem>
+              <SubMenu label="Pointless Bbuttons">
+                <MenuItem>#1</MenuItem>
+                <MenuItem>#2</MenuItem>
+                <SubMenu label="Submenu">
+                  <MenuItem>Gaming</MenuItem>
+                  <MenuItem>Groaning</MenuItem>
+                  <SubMenu label="Nested submenu">
+                    <MenuItem>Kiki</MenuItem>
+                    <MenuItem>Boba</MenuItem>
                   </SubMenu>
                 </SubMenu>
-              </SubMenu>
-              <SubMenu label="E-commerce">
-                <MenuItem> Product</MenuItem>
-                <MenuItem> Orders</MenuItem>
-                <MenuItem> Credit card</MenuItem>
               </SubMenu>
             </Menu>
 
@@ -156,15 +151,12 @@ export const AppSidebar: React.FC = () => {
                 className={styles.bodyText}
                 style={{ opacity: collapsed ? 0 : 0.7, letterSpacing: "0.5px" }}
               >
-                Extra
+                Category 2 (glorified links)
               </p>
             </div>
 
             <Menu menuItemStyles={menuItemStyles}>
-              <MenuItem suffix={<Badge variant="success">New</Badge>}>
-                Calendar
-              </MenuItem>
-              <MenuItem onClick={() => { window.showDirectoryPicker(); }}>Documentation</MenuItem>
+              <MenuItem>Random Button That Does Nothing</MenuItem>
             </Menu>
           </div>
           <div
