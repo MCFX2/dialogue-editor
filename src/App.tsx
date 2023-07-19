@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AppSidebar } from "./sidebar/Sidebar";
 import styles from "./App.module.scss";
 import { useMouseMove } from "./components/MouseUtils/UseMouseMove";
 import { useMouseRelease } from "./components/MouseUtils/UseMouseClick";
-import { NodeWindow } from "./components/NodeWindow/NodeWindow";
+import { NodeControl, NodeWindow } from "./components/NodeWindow/NodeWindow";
 
 interface NodeHandle {
 	name: string;
 	worldPosition: { x: number; y: number };
+	controls: NodeControl[];
+	uuid: string;
 }
 
 function App() {
@@ -54,11 +56,25 @@ function App() {
 					x: -worldPosition.x + mousePos.x,
 					y: -worldPosition.y + mousePos.y,
 				},
+				controls: [],
+				uuid: Math.random().toString(36).substring(7),
 			},
 		]);
 	};
 
 	const bgPos = clampBgPosition(worldPosition.x, worldPosition.y);
+
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.shiftKey && e.key.toLowerCase() === "e") {
+				makeNode();
+			}
+		};
+		document.addEventListener("keydown", handleKeyDown);
+		return () => {
+			document.removeEventListener("keydown", handleKeyDown);
+		};
+	});
 
 	return (
 		<>
@@ -76,11 +92,18 @@ function App() {
 				<div
 					className={styles.mainContainer}
 					onMouseDown={(e) => {
-						if (e.target === e.currentTarget) setGrabbing(true);
+						if (e.target === e.currentTarget && e.button === 0) setGrabbing(true);
 					}}
 				>
 					{workspace.map((node) => (
 						<NodeWindow
+							key={node.uuid}
+							addControl={(control) => {
+								node.controls.push(control);
+								updateWorkspace([...workspace]);
+								console.log(workspace[0].controls.length);
+							}}
+							controls={node.controls}
 							worldPosition={{
 								x: worldPosition.x + node.worldPosition.x,
 								y: worldPosition.y + node.worldPosition.y,

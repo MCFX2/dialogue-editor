@@ -3,10 +3,10 @@ import {
 	Menu,
 	MenuItem,
 	Sidebar,
-	SubMenu,
 	// import sidebar library to make life easier. end up having to rip out half the functionality and do it myself anyway. classic
 } from "react-pro-sidebar";
 import styles from "./Sidebar.module.scss";
+import { PlusIcon1, PlusIcon2 } from "../components/SVG/PlusIcon";
 
 export interface SidebarProps {
 	createNewNode: () => void;
@@ -46,47 +46,13 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 								className={styles.bodyText}
 								style={{ opacity: collapsed ? 0 : 0.7, letterSpacing: "0.5px" }}
 							>
-								Category 1 (Submenus)
+								New
 							</p>
 						</div>
 						<Menu>
-							<SubMenu
-								label="pinged by @everyone"
-								suffix={<div className={styles.badge}>:D</div>}
-							>
-								<MenuItem>Option 1</MenuItem>
-								<MenuItem>Option B</MenuItem>
-								<MenuItem>Squirrel</MenuItem>
-							</SubMenu>
-							<SubMenu
-								rootStyles={{ backgroundColor: "clear" }}
-								className={styles.subMenuHeader}
-								label="Nodes"
-							>
-								<MenuItem
-									className={styles.subMenu1}
-									onClick={props.createNewNode}
-								>
-									New Node (Ctrl+E)
-								</MenuItem>
-								<MenuItem>Find a bite to eat?</MenuItem>
-							</SubMenu>
-							<SubMenu label="Useless buttons">
-								<MenuItem>A</MenuItem>
-								<MenuItem>B</MenuItem>
-							</SubMenu>
-							<SubMenu label="Pointless Bbuttons">
-								<MenuItem>#1</MenuItem>
-								<MenuItem>#2</MenuItem>
-								<SubMenu label="Submenu">
-									<MenuItem>Gaming</MenuItem>
-									<MenuItem>Groaning</MenuItem>
-									<SubMenu label="Nested submenu">
-										<MenuItem>Kiki</MenuItem>
-										<MenuItem>Boba</MenuItem>
-									</SubMenu>
-								</SubMenu>
-							</SubMenu>
+							<MenuItem icon={<PlusIcon2 size={32} />} onClick={props.createNewNode}>
+								New Node (Shift+E)
+							</MenuItem>
 						</Menu>
 
 						<div
@@ -133,12 +99,12 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 					</div>
 					{collapsed ? (
 						<div className={styles.legalText}>
-							Nodedit v0.1a
+							Nodedit v0.1b
 							<p>EVALUATION</p>
 						</div>
 					) : (
 						<div className={styles.legalText}>
-							Nodedit v0.1-alpha (c) 2023 Rozalily
+							Nodedit v0.1-beta (c) 2023 Rozalily
 							<p>This software for evaluation purposes only.</p>
 						</div>
 					)}

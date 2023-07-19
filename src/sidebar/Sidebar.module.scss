@@ -166,7 +166,7 @@
 }
 
 .subMenu1 {
-	@extend .sidebar;
-
-	background-color: #0b0928c0;
+	user-select: none;
+	// color:#00000000
+	// background-color: #000000c0;
 }

@@ -3,7 +3,6 @@ import { useState } from "react";
 import { ResizeEdgeContainer, ResizeEdgeSide } from "./ResizeEdge";
 import { ResizableTitlebar } from "./ResizeTitlebar";
 import styles from "./Resize.module.css";
-import { ExpandCollapseButton } from "../ExpandCollapseButton/ExpandCollapseButton";
 
 export interface ResizableWindowProps {
 	minWidth?: number;
@@ -126,25 +125,6 @@ export const ResizableWindow = ({
 		isCollapsed: defaultCollapsed,
 	});
 
-	const requestCollapse = () => {
-		if (!windowLayout.isCollapsed) {
-			// by default collapse upward (preserving titlebar position)
-			// however if window is at bottom edge we should collapse downward instead
-			if (windowLayout.position.y + windowLayout.size.y >= viewportSize.y) {
-				// technically the Y here is out of bounds, but we assume it'll be clamped
-				requestWindowLayout({
-					pos: { x: windowLayout.position.x, y: viewportSize.y },
-					collapsed: true,
-				});
-			} else {
-				requestWindowLayout({ collapsed: true });
-			}
-		} else {
-			// simply re-request the current layout and we guarantee a valid position
-			requestWindowLayout({ collapsed: false });
-		}
-	};
-
 	const requestWindowLayout = ({
 		pos = windowLayout.position,
 		size = windowLayout.size,
@@ -251,12 +231,6 @@ export const ResizableWindow = ({
 						height={titlebarHeight}
 					>
 						{titlebarChildren}
-						{allowCollapse && (
-							<ExpandCollapseButton
-								onClick={requestCollapse}
-								isCollapsed={windowLayout.isCollapsed}
-							/>
-						)}
 					</ResizableTitlebar>
 					{!windowLayout.isCollapsed && (
 						<div

@@ -6,15 +6,26 @@ export interface SearchListProps {
 	searchText: string;
 
 	controlCandidates: NodeControl[];
+
+	addControl: (control: NodeControl) => void;
+
+	currentIdx: number;
+}
+
+interface ElementNodeBinding {
+	element: JSX.Element;
+	node?: NodeControl;
 }
 
 export const SearchList: FC<SearchListProps> = ({
 	searchText,
 	controlCandidates,
+	addControl,
+	currentIdx
 }: SearchListProps) => {
 	const [selectedIdx, setSelectedIdx] = useState(0);
 
-	const list: JSX.Element[] = [];
+	const list: ElementNodeBinding[] = [];
 	let firstValid = false;
 	for (const control of controlCandidates) {
 		if (
@@ -22,23 +33,29 @@ export const SearchList: FC<SearchListProps> = ({
 			control.type.toUpperCase().includes(searchText.toUpperCase())
 		) {
 			const idx = list.length;
-			list.push(
-				<li
-					className={
-						selectedIdx === idx ? styles.selectedMenuOption : styles.menuOption
-					}
-					onMouseOver={() => {
-						setSelectedIdx(idx);
-					}}
-					onMouseLeave={() => {
-						if(selectedIdx === idx) {
-							setSelectedIdx(0);
+			list.push({
+				element: (
+					<li
+						key={idx}
+						className={
+							selectedIdx === idx
+								? styles.selectedMenuOption
+								: styles.menuOption
 						}
-					}}
-				>
-					<p className={styles.menuOptionText}>{control.humanName}</p>
-				</li>
-			);
+						onMouseOver={() => {
+							setSelectedIdx(idx);
+						}}
+						onMouseLeave={() => {
+							if (selectedIdx === idx) {
+								setSelectedIdx(0);
+							}
+						}}
+					>
+						<p className={styles.menuOptionText}>{control.humanName}</p>
+					</li>
+				),
+				node: control,
+			});
 			if (!firstValid) {
 				firstValid = true;
 			}
@@ -46,11 +63,16 @@ export const SearchList: FC<SearchListProps> = ({
 	}
 
 	if (list.length === 0) {
-		list.push(
-			<li className={styles.menuOption}>
-				<p className={styles.menuOptionText}><i>No results found</i></p>
-			</li>
-		);
+		list.push({
+			element: (
+				<li className={styles.menuOption}>
+					<p className={styles.menuOptionText}>
+						<i>No results found</i>
+					</p>
+				</li>
+			),
+			node: undefined,
+		});
 	}
 
 	useEffect(() => {
@@ -64,8 +86,12 @@ export const SearchList: FC<SearchListProps> = ({
 					setSelectedIdx(selectedIdx - 1);
 				}
 			} else if (e.key === "Enter") {
-				if (list.length > 0) {
+				const node = list[selectedIdx].node;
+				if (list.length > 0 && node !== undefined) {
 					// add the selected control to the node
+					const newNode = { ...node };
+					newNode.index = currentIdx;
+					addControl(newNode);
 				}
 			}
 		};
@@ -74,12 +100,12 @@ export const SearchList: FC<SearchListProps> = ({
 
 		return () => {
 			window.removeEventListener("keydown", handleKeyboardSearch);
-		}
-	})
+		};
+	});
 
 	return (
 		<div className={styles.addMenu}>
-			<ul className={styles.addMenuList}>{list}</ul>
+			<ul className={styles.addMenuList}>{list.map((l) => l.element)}</ul>
 		</div>
 	);
 };
