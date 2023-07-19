@@ -5,15 +5,6 @@ import { useMouseMove } from "./components/MouseUtils/UseMouseMove";
 import { useMouseRelease } from "./components/MouseUtils/UseMouseClick";
 import { NodeWindow } from "./components/NodeWindow/NodeWindow";
 
-async function enumerateDirectories(dir: FileSystemDirectoryHandle) {
-	const results = [];
-	const dirs = dir.values();
-	for await (const d of dirs) {
-		results.push(d);
-	}
-	return results;
-}
-
 interface NodeHandle {
 	name: string;
 	worldPosition: { x: number; y: number };
@@ -23,7 +14,6 @@ function App() {
 	const [worldPosition, setWorldPosition] = useState({ x: 0, y: 0 });
 	const [grabbing, setGrabbing] = useState(false);
 	const worldSize = { width: 2160, height: 1528 };
-	const [zoomLevel, setZoomLevel] = useState(1);
 	const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
 	const clampBgPosition = (x: number, y: number) => {
@@ -77,9 +67,7 @@ function App() {
 					className={styles.wholeAppBg}
 					style={{
 						transform: `translate(${bgPos.x}px, ${bgPos.y}px)`,
-						backgroundSize: `${worldSize.width * zoomLevel}px ${
-							worldSize.height * zoomLevel
-						}px`,
+						backgroundSize: `${worldSize.width}px ${worldSize.height}px`,
 					}}
 				/>
 			</div>
@@ -96,8 +84,8 @@ function App() {
 							worldPosition={{
 								x: worldPosition.x + node.worldPosition.x,
 								y: worldPosition.y + node.worldPosition.y,
-              }}
-              title={node.name}
+							}}
+							title={node.name}
 						/>
 					))}
 				</div>

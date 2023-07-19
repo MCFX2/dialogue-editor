@@ -13,7 +13,6 @@ export const SearchList: FC<SearchListProps> = ({
 	controlCandidates,
 }: SearchListProps) => {
 	const [selectedIdx, setSelectedIdx] = useState(0);
-	const [defaultIdx, setDefaultIdx] = useState(0);
 
 	const list: JSX.Element[] = [];
 	let firstValid = false;
@@ -33,7 +32,7 @@ export const SearchList: FC<SearchListProps> = ({
 					}}
 					onMouseLeave={() => {
 						if(selectedIdx === idx) {
-							setSelectedIdx(defaultIdx);
+							setSelectedIdx(0);
 						}
 					}}
 				>
