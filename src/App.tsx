@@ -1,7 +1,9 @@
+import React, { useState } from "react";
 import { AppSidebar } from "./sidebar/Sidebar";
 import styles from "./App.module.scss";
-import { useEffect, useState } from "react";
-import { ResizableWindow } from "./components/Resize/ResizableWindow";
+import { useMouseMove } from "./components/MouseUtils/UseMouseMove";
+import { useMouseRelease } from "./components/MouseUtils/UseMouseClick";
+import { NodeWindow } from "./components/NodeWindow/NodeWindow";
 
 async function enumerateDirectories(dir: FileSystemDirectoryHandle) {
 	const results = [];
@@ -12,11 +14,17 @@ async function enumerateDirectories(dir: FileSystemDirectoryHandle) {
 	return results;
 }
 
+interface NodeHandle {
+	name: string;
+	worldPosition: { x: number; y: number };
+}
+
 function App() {
 	const [worldPosition, setWorldPosition] = useState({ x: 0, y: 0 });
 	const [grabbing, setGrabbing] = useState(false);
 	const worldSize = { width: 2160, height: 1528 };
 	const [zoomLevel, setZoomLevel] = useState(1);
+	const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
 	const clampBgPosition = (x: number, y: number) => {
 		const { width, height } = worldSize;
@@ -28,18 +36,37 @@ function App() {
 	};
 
 	// click and drag to move the background
-	useEffect(() => {
-		const onMouseMove = (e: MouseEvent) => {
-			if (grabbing) {
-				setWorldPosition((prev) => ({
-					x: prev.x + e.movementX,
-					y: prev.y + e.movementY,
-				}));
-			}
-		};
-		window.addEventListener("mousemove", onMouseMove);
-		return () => window.removeEventListener("mousemove", onMouseMove);
-	}, [grabbing]);
+	useMouseMove((e) => {
+		if (grabbing) {
+			setWorldPosition((prev) => ({
+				x: prev.x + e.movementX,
+				y: prev.y + e.movementY,
+			}));
+		}
+
+		setMousePos({ x: e.clientX, y: e.clientY });
+	});
+
+	useMouseRelease((e) => {
+		if (grabbing && e.button === 0) {
+			setGrabbing(false);
+		}
+	});
+
+	const [workspace, updateWorkspace] = useState<NodeHandle[]>([]);
+
+	const makeNode = () => {
+		updateWorkspace([
+			...workspace,
+			{
+				name: "Empty Node",
+				worldPosition: {
+					x: -worldPosition.x + mousePos.x,
+					y: -worldPosition.y + mousePos.y,
+				},
+			},
+		]);
+	};
 
 	const bgPos = clampBgPosition(worldPosition.x, worldPosition.y);
 
@@ -57,14 +84,23 @@ function App() {
 				/>
 			</div>
 			<div className={styles.wholeAppContainer}>
-				<AppSidebar />
-				<main>
-					<div className={styles.mainContainer}>
-						<ResizableWindow allowCollapse={false} allowOutOfBounds={true} allowHorizontalResize={false} allowVerticalResize={false}>
-							<p>This is a node, someday.</p>
-						</ResizableWindow>
-					</div>
-				</main>
+				<AppSidebar createNewNode={makeNode} />
+				<div
+					className={styles.mainContainer}
+					onMouseDown={(e) => {
+						if (e.target === e.currentTarget) setGrabbing(true);
+					}}
+				>
+					{workspace.map((node) => (
+						<NodeWindow
+							worldPosition={{
+								x: worldPosition.x + node.worldPosition.x,
+								y: worldPosition.y + node.worldPosition.y,
+              }}
+              title={node.name}
+						/>
+					))}
+				</div>
 			</div>
 		</>
 	);

@@ -31,7 +31,7 @@
 
 	&:hover {
 		background-color: #00458b;
-		color: #b6c8d9;
+		color: #96c8d9;
 	}
 }
 
@@ -146,4 +146,27 @@
 	border-color: #00254b;
 	border-right: solid;
 	user-select: none;
+
+	cursor: default;
+}
+
+.sidebarBackground {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	position: absolute;
+	object-position: center;
+	z-index: -1;
+	left: 0;
+	top: 0;
+}
+
+.subMenuHeader {
+	background-color: #00000000;
+}
+
+.subMenu1 {
+	@extend .sidebar;
+
+	background-color: #0b0928c0;
 }
