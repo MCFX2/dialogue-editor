@@ -4,6 +4,7 @@ import styles from "./App.module.scss";
 import { useMouseMove } from "./components/MouseUtils/UseMouseMove";
 import { useMouseRelease } from "./components/MouseUtils/UseMouseClick";
 import { NodeControl, NodeWindow } from "./components/NodeWindow/NodeWindow";
+import * as uuid from 'uuid';
 
 interface NodeHandle {
 	name: string;
@@ -57,7 +58,7 @@ function App() {
 					y: -worldPosition.y + mousePos.y,
 				},
 				controls: [],
-				uuid: Math.random().toString(36).substring(7),
+				uuid: uuid.v4(),
 			},
 		]);
 	};
@@ -99,9 +100,19 @@ function App() {
 						<NodeWindow
 							key={node.uuid}
 							addControl={(control) => {
-								node.controls.push(control);
+								const newControl = { ...control };
+								newControl.uuid = uuid.v4();
+								newControl.index = node.controls.length;
+								node.controls.push(newControl);
 								updateWorkspace([...workspace]);
-								console.log(workspace[0].controls.length);
+							}}
+							removeControl={(uuid) => {
+								node.controls = node.controls.filter((c) => c.uuid !== uuid);
+								updateWorkspace([...workspace]);
+							}}
+							setTitle={(title) => {
+								node.name = title;
+								updateWorkspace([...workspace]);
 							}}
 							controls={node.controls}
 							worldPosition={{

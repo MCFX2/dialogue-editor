@@ -10,6 +10,8 @@
 	background: linear-gradient(45deg, rgb(61 61 180) 0%, rgb(255 95 60) 100%);
 	display: flex;
 	cursor: move;
+
+	font-family: 'Monocraft';
 }
 
 .resizeWindow {

@@ -45,6 +45,11 @@ export const SearchList: FC<SearchListProps> = ({
 						onMouseOver={() => {
 							setSelectedIdx(idx);
 						}}
+						onMouseDown={() => {
+							const newNode = { ...control };
+							newNode.index = currentIdx;
+							addControl(newNode);
+						}}
 						onMouseLeave={() => {
 							if (selectedIdx === idx) {
 								setSelectedIdx(0);
@@ -65,7 +70,7 @@ export const SearchList: FC<SearchListProps> = ({
 	if (list.length === 0) {
 		list.push({
 			element: (
-				<li className={styles.menuOption}>
+				<li key={-1} className={styles.menuOption}>
 					<p className={styles.menuOptionText}>
 						<i>No results found</i>
 					</p>

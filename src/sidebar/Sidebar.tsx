@@ -6,7 +6,7 @@ import {
 	// import sidebar library to make life easier. end up having to rip out half the functionality and do it myself anyway. classic
 } from "react-pro-sidebar";
 import styles from "./Sidebar.module.scss";
-import { PlusIcon1, PlusIcon2 } from "../components/SVG/PlusIcon";
+import { PlusIcon2 } from "../components/SVG/PlusIcon";
 
 export interface SidebarProps {
 	createNewNode: () => void;
@@ -99,13 +99,13 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 					</div>
 					{collapsed ? (
 						<div className={styles.legalText}>
-							Nodedit v0.1b
+							v0.1-beta
 							<p>EVALUATION</p>
 						</div>
 					) : (
 						<div className={styles.legalText}>
-							Nodedit v0.1-beta (c) 2023 Rozalily
-							<p>This software for evaluation purposes only.</p>
+							v0.1rc (c) 2023 Rozalily
+							<p>For evaluation purposes only.</p>
 						</div>
 					)}
 				</div>

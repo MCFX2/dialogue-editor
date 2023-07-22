@@ -13,7 +13,6 @@ export interface ResizableWindowProps {
 
 	defaultHeight?: number;
 	defaultWidth?: number;
-	allowCollapse?: boolean;
 	defaultCollapsed?: boolean;
 
 	defaultXPos?: number;
@@ -26,11 +25,14 @@ export interface ResizableWindowProps {
 
 	onMouseEnter?: () => void;
 	onMouseLeave?: () => void;
+	onSizeChange?: (newSize: { x: number; y: number }) => void;
 
 	forcedOffsetX?: number;
 	forcedOffsetY?: number;
 
 	ignoreWindowResize?: boolean;
+
+	forcedHeight?: number;
 
 	titlebarChildren?: any;
 	children?: any;
@@ -45,10 +47,10 @@ export const ResizableWindow = ({
 
 	onMouseEnter = () => {},
 	onMouseLeave = () => {},
+	onSizeChange = () => {},
 
 	defaultHeight = minHeight,
 	defaultWidth = minWidth,
-	allowCollapse = true,
 	defaultCollapsed = false,
 	defaultXPos = 0,
 	defaultYPos = 0,
@@ -59,10 +61,12 @@ export const ResizableWindow = ({
 	forcedOffsetX = 0,
 	forcedOffsetY = 0,
 
+	forcedHeight,
+
 	ignoreWindowResize = false,
 
 	children,
-	titlebarChildren
+	titlebarChildren,
 }: ResizableWindowProps) => {
 	const minCollapsedWidth = minWidth;
 	const maxCollapsedWidth = maxWidth;
@@ -108,7 +112,7 @@ export const ResizableWindow = ({
 	const [windowLayout, setWindowLayout] = useState({
 		size: {
 			x: clamp(defaultWidth, minWidth, window.innerWidth),
-			y: defaultHeight,
+			y: forcedHeight === undefined ? defaultHeight : forcedHeight,
 		},
 		collapsedSize: {
 			x: clamp(defaultWidth, minCollapsedWidth, maxCollapsedWidth),
@@ -134,9 +138,12 @@ export const ResizableWindow = ({
 			x: clamp(size.x, minWidth, realMaxWidth),
 			// don't allow vertical resizing when collapsed
 			// todo: track the attempted change so we can auto-collapse/uncollapse at the right time
-			y: collapsed
-				? windowLayout.size.y
-				: clamp(size.y, minHeight, realMaxHeight),
+			y:
+				forcedHeight === undefined
+					? collapsed
+						? windowLayout.size.y
+						: clamp(size.y, minHeight, realMaxHeight)
+					: forcedHeight,
 		};
 
 		const finalPos = {
@@ -152,6 +159,9 @@ export const ResizableWindow = ({
 				  ),
 		};
 
+		const sizeChanged =
+			finalSize.x !== windowLayout.size.x ||
+			finalSize.y !== windowLayout.size.y;
 		setWindowLayout({
 			position: finalPos,
 			size: finalSize,
@@ -161,6 +171,10 @@ export const ResizableWindow = ({
 			},
 			isCollapsed: collapsed,
 		});
+
+		if (sizeChanged) {
+			onSizeChange(finalSize);
+		}
 	};
 
 	// returns what the size would be if you'd called requestWindowLayout with the specified size
@@ -168,9 +182,12 @@ export const ResizableWindow = ({
 		return {
 			x: clamp(size.x, minWidth, realMaxWidth),
 			// todo: track the attempted change so we can auto-collapse/uncollapse at the right time
-			y: windowLayout.isCollapsed
-				? windowLayout.size.y
-				: clamp(size.y, minHeight, realMaxHeight),
+			y:
+				forcedHeight === undefined
+					? windowLayout.isCollapsed
+						? windowLayout.size.y
+						: clamp(size.y, minHeight, realMaxHeight)
+					: forcedHeight,
 		};
 	};
 
@@ -182,10 +199,12 @@ export const ResizableWindow = ({
 			).x
 		}px`,
 		height: `${
-			(windowLayout.isCollapsed
-				? windowLayout.collapsedSize
-				: windowLayout.size
-			).y
+			forcedHeight === undefined
+				? (windowLayout.isCollapsed
+						? windowLayout.collapsedSize
+						: windowLayout.size
+				  ).y
+				: forcedHeight
 		}px`,
 		left: `${windowLayout.position.x + forcedOffsetX}px`,
 		top: `${windowLayout.position.y + forcedOffsetY}px`,
@@ -194,7 +213,7 @@ export const ResizableWindow = ({
 	let contentAreaCss = {
 		height: windowLayout.isCollapsed
 			? 0
-			: `${windowLayout.size.y - titlebarHeight}px`,
+			: `${(forcedHeight === undefined ? windowLayout.size.y : forcedHeight) - titlebarHeight}px`,
 	};
 
 	return (
