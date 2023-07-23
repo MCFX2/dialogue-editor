@@ -10,6 +10,7 @@ import { PlusIcon2 } from "../components/SVG/PlusIcon";
 
 export interface SidebarProps {
 	createNewNode: () => void;
+	loadWorkspace: () => void;
 }
 
 export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
@@ -46,13 +47,14 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 								className={styles.bodyText}
 								style={{ opacity: collapsed ? 0 : 0.7, letterSpacing: "0.5px" }}
 							>
-								New
+								File
 							</p>
 						</div>
 						<Menu>
 							<MenuItem icon={<PlusIcon2 size={32} />} onClick={props.createNewNode}>
 								New Node (Shift+E)
 							</MenuItem>
+							<MenuItem onClick={props.loadWorkspace}>Load Workspace</MenuItem>
 						</Menu>
 
 						<div
@@ -99,12 +101,12 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 					</div>
 					{collapsed ? (
 						<div className={styles.legalText}>
-							v0.1-beta
+							v0.1-rc2
 							<p>EVALUATION</p>
 						</div>
 					) : (
 						<div className={styles.legalText}>
-							v0.1rc (c) 2023 Rozalily
+							v0.1-rc2 (c) 2023 Rozalily
 							<p>For evaluation purposes only.</p>
 						</div>
 					)}

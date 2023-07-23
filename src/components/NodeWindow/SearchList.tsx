@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from "react";
 import styles from "./NodeWindow.module.scss";
-import { NodeControl } from "./NodeWindow";
+import { NodeControl } from "./NodeControl";
 
 export interface SearchListProps {
 	searchText: string;

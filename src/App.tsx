@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppSidebar } from "./sidebar/Sidebar";
 import styles from "./App.module.scss";
 import { useMouseMove } from "./components/MouseUtils/UseMouseMove";
 import { useMouseRelease } from "./components/MouseUtils/UseMouseClick";
-import { NodeControl, NodeWindow } from "./components/NodeWindow/NodeWindow";
-import * as uuid from 'uuid';
+import { NodeWindow } from "./components/NodeWindow/NodeWindow";
+import { NodeControl } from "./components/NodeWindow/NodeControl";
+import * as uuid from "uuid";
 
 interface NodeHandle {
 	name: string;
@@ -14,10 +15,14 @@ interface NodeHandle {
 }
 
 function App() {
-	const [worldPosition, setWorldPosition] = useState({ x: 0, y: 0 });
+	const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
 	const [grabbing, setGrabbing] = useState(false);
 	const worldSize = { width: 2160, height: 1528 };
 	const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+	const [workspaceHandle, setWorkspaceHandle] = useState<
+		FileSystemDirectoryHandle | undefined
+	>(undefined);
 
 	const clampBgPosition = (x: number, y: number) => {
 		const { width, height } = worldSize;
@@ -31,7 +36,7 @@ function App() {
 	// click and drag to move the background
 	useMouseMove((e) => {
 		if (grabbing) {
-			setWorldPosition((prev) => ({
+			setCameraPosition((prev) => ({
 				x: prev.x + e.movementX,
 				y: prev.y + e.movementY,
 			}));
@@ -54,8 +59,8 @@ function App() {
 			{
 				name: "Empty Node",
 				worldPosition: {
-					x: -worldPosition.x + mousePos.x,
-					y: -worldPosition.y + mousePos.y,
+					x: -cameraPosition.x + mousePos.x,
+					y: -cameraPosition.y + mousePos.y,
 				},
 				controls: [],
 				uuid: uuid.v4(),
@@ -63,12 +68,88 @@ function App() {
 		]);
 	};
 
-	const bgPos = clampBgPosition(worldPosition.x, worldPosition.y);
+	const saveWorkspace = (handle?: FileSystemDirectoryHandle) => {
+		const usedHandle = handle ?? workspaceHandle;
+		if (usedHandle) {
+			usedHandle
+				.getFileHandle("workspace.json", { create: true })
+				.then((fileHandle) => {
+					fileHandle.createWritable().then((writer) => {
+						writer.write(JSON.stringify(workspace));
+						writer.close();
+					});
+				})
+				.catch((e) => {
+					console.log(e);
+				});
+		}
+	};
+
+	const initializeWorkspaceFile = async () => {
+		try {
+			const handle = await showDirectoryPicker();
+			setWorkspaceHandle(handle);
+			return handle;
+		} catch (e) {
+			console.log(e);
+			return undefined;
+		}
+	};
+
+	const loadWorkspace = (handle?: FileSystemDirectoryHandle) => {
+		const usedHandle = handle ?? workspaceHandle;
+		if (usedHandle) {
+			usedHandle
+				.getFileHandle("workspace.json")
+				.then((fileHandle) => {
+					fileHandle.getFile().then((file) => {
+						file.text().then((text) => {
+							updateWorkspace(JSON.parse(text));
+						});
+					});
+				})
+				.catch((e) => {
+					console.log(e);
+				});
+		}
+	};
+
+	const bgPos = clampBgPosition(cameraPosition.x, cameraPosition.y);
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
+			// keyboard shortcuts
+
+			// make node
 			if (e.shiftKey && e.key.toLowerCase() === "e") {
 				makeNode();
+			}
+
+			// save
+			if (e.ctrlKey && e.key.toLowerCase() === "s") {
+				e.preventDefault(); // suppress browser save dialog
+				// save workspace
+				if (workspaceHandle) {
+					saveWorkspace();
+				} else {
+					// initialize workspace file and save
+					initializeWorkspaceFile().then((h) => {
+						saveWorkspace(h);
+					});
+				}
+			}
+
+			// load
+			if (e.ctrlKey && e.key.toLowerCase() === "o") {
+				e.preventDefault(); // suppress browser open dialog
+				// load workspace
+				if (workspaceHandle) {
+					loadWorkspace();
+				} else {
+					initializeWorkspaceFile().then((h) => {
+						loadWorkspace(h);
+					});
+				}
 			}
 		};
 		document.addEventListener("keydown", handleKeyDown);
@@ -89,11 +170,23 @@ function App() {
 				/>
 			</div>
 			<div className={styles.wholeAppContainer}>
-				<AppSidebar createNewNode={makeNode} />
+				<AppSidebar
+					createNewNode={makeNode}
+					loadWorkspace={() => {
+						if (workspaceHandle) {
+							loadWorkspace();
+						} else {
+							initializeWorkspaceFile().then((h) => {
+								loadWorkspace(h);
+							});
+						}
+					}}
+				/>
 				<div
 					className={styles.mainContainer}
 					onMouseDown={(e) => {
-						if (e.target === e.currentTarget && e.button === 0) setGrabbing(true);
+						if (e.target === e.currentTarget && e.button === 0)
+							setGrabbing(true);
 					}}
 				>
 					{workspace.map((node) => (
@@ -106,6 +199,10 @@ function App() {
 								node.controls.push(newControl);
 								updateWorkspace([...workspace]);
 							}}
+							updateControl={(index, newControl) => {
+								node.controls[index] = newControl;
+								updateWorkspace([...workspace]);
+							}}
 							removeControl={(uuid) => {
 								node.controls = node.controls.filter((c) => c.uuid !== uuid);
 								updateWorkspace([...workspace]);
@@ -115,9 +212,17 @@ function App() {
 								updateWorkspace([...workspace]);
 							}}
 							controls={node.controls}
-							worldPosition={{
-								x: worldPosition.x + node.worldPosition.x,
-								y: worldPosition.y + node.worldPosition.y,
+							renderPosition={{
+								x: cameraPosition.x + node.worldPosition.x,
+								y: cameraPosition.y + node.worldPosition.y,
+							}}
+							setRenderPosition={(newPos) => {
+								node.worldPosition = {
+									x: newPos.x - cameraPosition.x,
+									y: newPos.y - cameraPosition.y,
+								};
+
+								updateWorkspace([...workspace]);
 							}}
 							title={node.name}
 						/>

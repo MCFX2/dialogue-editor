@@ -26,9 +26,10 @@ export interface ResizableWindowProps {
 	onMouseEnter?: () => void;
 	onMouseLeave?: () => void;
 	onSizeChange?: (newSize: { x: number; y: number }) => void;
+	onWindowMoved?: (newPos: { x: number; y: number }) => void;
 
-	forcedOffsetX?: number;
-	forcedOffsetY?: number;
+	forcedPositionX?: number;
+	forcedPositionY?: number;
 
 	ignoreWindowResize?: boolean;
 
@@ -48,6 +49,7 @@ export const ResizableWindow = ({
 	onMouseEnter = () => {},
 	onMouseLeave = () => {},
 	onSizeChange = () => {},
+	onWindowMoved = () => {},
 
 	defaultHeight = minHeight,
 	defaultWidth = minWidth,
@@ -58,8 +60,8 @@ export const ResizableWindow = ({
 	allowHorizontalResize = true,
 	allowVerticalResize = true,
 
-	forcedOffsetX = 0,
-	forcedOffsetY = 0,
+	forcedPositionX = undefined,
+	forcedPositionY = undefined,
 
 	forcedHeight,
 
@@ -119,12 +121,14 @@ export const ResizableWindow = ({
 			y: titlebarHeight, // titlebar height can't change
 		},
 		position: {
-			x: allowOutOfBounds
-				? defaultXPos
-				: clamp(defaultXPos, 0, window.innerWidth - defaultWidth),
-			y: allowOutOfBounds
-				? defaultYPos
-				: clamp(defaultYPos, 0, window.innerHeight - defaultHeight),
+			x:
+				forcedPositionX ?? (allowOutOfBounds
+					? defaultXPos
+					: clamp(defaultXPos, 0, window.innerWidth - defaultWidth)),
+			y:
+				forcedPositionY ?? (allowOutOfBounds
+					? defaultYPos
+					: clamp(defaultYPos, 0, window.innerHeight - defaultHeight)),
 		},
 		isCollapsed: defaultCollapsed,
 	});
@@ -159,11 +163,19 @@ export const ResizableWindow = ({
 				  ),
 		};
 
+		const posChanged =
+			finalPos.x !== windowLayout.position.x ||
+			finalPos.y !== windowLayout.position.y;
+		
 		const sizeChanged =
 			finalSize.x !== windowLayout.size.x ||
 			finalSize.y !== windowLayout.size.y;
+
 		setWindowLayout({
-			position: finalPos,
+			position: {
+				x: forcedPositionX ?? finalPos.x,
+				y: forcedPositionY ?? finalPos.y,
+			},
 			size: finalSize,
 			collapsedSize: {
 				x: finalSize.x,
@@ -174,6 +186,10 @@ export const ResizableWindow = ({
 
 		if (sizeChanged) {
 			onSizeChange(finalSize);
+		}
+
+		if (posChanged) {
+			onWindowMoved(finalPos);
 		}
 	};
 
@@ -206,14 +222,17 @@ export const ResizableWindow = ({
 				  ).y
 				: forcedHeight
 		}px`,
-		left: `${windowLayout.position.x + forcedOffsetX}px`,
-		top: `${windowLayout.position.y + forcedOffsetY}px`,
+		left: `${forcedPositionX ?? windowLayout.position.x}px`,
+		top: `${forcedPositionY ?? windowLayout.position.y}px`,
 	};
 
 	let contentAreaCss = {
 		height: windowLayout.isCollapsed
 			? 0
-			: `${(forcedHeight === undefined ? windowLayout.size.y : forcedHeight) - titlebarHeight}px`,
+			: `${
+					(forcedHeight === undefined ? windowLayout.size.y : forcedHeight) -
+					titlebarHeight
+			  }px`,
 	};
 
 	return (
