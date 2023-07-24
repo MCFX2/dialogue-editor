@@ -24,6 +24,9 @@ export interface NodeControl {
 	// for primitives, this is the value
 	// for composites and arrays, this is the children
 	content?: any;
+
+	// uuid of the parent node
+	parent: string;
 }
 
 interface ControlHolderProps {
@@ -140,6 +143,7 @@ export const PrimitiveControls: NodeControl[] = [
 		humanName: "Number",
 		index: -1,
 		uuid: "",
+		parent: "",
 		renderHeight: 48,
 	},
 	{
@@ -148,6 +152,7 @@ export const PrimitiveControls: NodeControl[] = [
 		humanName: "Text",
 		index: -1,
 		uuid: "",
+		parent: "",
 		renderHeight: 48,
 	},
 	{
@@ -156,6 +161,7 @@ export const PrimitiveControls: NodeControl[] = [
 		humanName: "Checkbox",
 		index: -1,
 		uuid: "",
+		parent: "",
 		renderHeight: 48,
 	},
 	{
@@ -164,6 +170,7 @@ export const PrimitiveControls: NodeControl[] = [
 		humanName: "Node",
 		index: -1,
 		uuid: "",
+		parent: "",
 		renderHeight: 48,
 	},
 ];

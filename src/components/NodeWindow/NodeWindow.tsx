@@ -18,6 +18,8 @@ export interface NodeWindowProps {
 	addControl: (control: NodeControl) => void;
 	updateControl: (index: number, newControl: NodeControl) => void;
 	removeControl: (uuid: string) => void;
+	width: number;
+	setWidth: (newWidth: number) => void;
 	setTitle: (title: string) => void;
 }
 
@@ -28,8 +30,6 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 	const [grabbingFrom, setGrabbingFrom] = useState<number | undefined>(undefined);
 	const [sliderPos, setSliderPos] = useState(0);
 	const [reqSliderPos, setReqSliderPos] = useState(0);
-
-	const [windowWidth, setWindowWidth] = useState(400);
 
 	useMouseRelease((e) => {
 		if (grabbingFrom !== undefined && e.button === 0) {
@@ -71,6 +71,8 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 			ignoreWindowResize={true}
 			minWidth={200}
 			defaultWidth={400}
+			defaultXPos={props.renderPosition.x}
+			defaultYPos={props.renderPosition.y}
 			forcedHeight={combinedControlHeight + 96}
 			titlebarChildren={
 				props.title === undefined ? undefined : (
@@ -83,7 +85,7 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 				)
 			}
 			onSizeChange={(newSize) => {
-				setWindowWidth(newSize.x);
+				props.setWidth(newSize.x);
 			}}
 		>
 			{props.controls?.map((control) =>
@@ -103,7 +105,7 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 					},
 					(e: React.MouseEvent) => setGrabbingFrom(e.clientX),
 					sliderPos,
-					windowWidth
+					props.width
 				)
 			)}
 			<div className={styles.addButtonField}>

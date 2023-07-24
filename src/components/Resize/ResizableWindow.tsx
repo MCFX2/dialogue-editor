@@ -122,11 +122,13 @@ export const ResizableWindow = ({
 		},
 		position: {
 			x:
-				forcedPositionX ?? (allowOutOfBounds
+				forcedPositionX ??
+				(allowOutOfBounds
 					? defaultXPos
 					: clamp(defaultXPos, 0, window.innerWidth - defaultWidth)),
 			y:
-				forcedPositionY ?? (allowOutOfBounds
+				forcedPositionY ??
+				(allowOutOfBounds
 					? defaultYPos
 					: clamp(defaultYPos, 0, window.innerHeight - defaultHeight)),
 		},
@@ -166,7 +168,7 @@ export const ResizableWindow = ({
 		const posChanged =
 			finalPos.x !== windowLayout.position.x ||
 			finalPos.y !== windowLayout.position.y;
-		
+
 		const sizeChanged =
 			finalSize.x !== windowLayout.size.x ||
 			finalSize.y !== windowLayout.size.y;
@@ -265,7 +267,10 @@ export const ResizableWindow = ({
 				<div className={styles.resizeWindowVisibleContainer}>
 					<ResizableTitlebar
 						setWindowLayout={requestWindowLayout}
-						windowPos={windowLayout.position}
+						windowPos={{
+							x: forcedPositionX ?? windowLayout.position.x,
+							y: forcedPositionY ?? windowLayout.position.y,
+						}}
 						height={titlebarHeight}
 					>
 						{titlebarChildren}

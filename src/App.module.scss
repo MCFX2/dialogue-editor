@@ -27,7 +27,7 @@
   top: -200%;
   left: -200%;
   width: 800%;
-  height: 400%;
+  height: 800%;
   position: absolute;
 }
 
@@ -44,4 +44,7 @@
   display: flex;
   height: 100%;
   width: 100%;
+
+  overflow: hidden;
+  position: absolute;
 }

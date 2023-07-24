@@ -12,6 +12,8 @@
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+
+	background: linear-gradient(75deg, rgb(30 30 90) 0%, rgb(127 47 30) 100%);
 }
 
 .disableColor {
@@ -31,7 +33,7 @@
 
 	&:hover {
 		background-color: #00458b;
-		color: #96c8d9;
+		color: #777777;
 	}
 }
 
@@ -152,6 +154,11 @@
 	cursor: default;
 }
 
+.sidebarObject > div {
+	overflow-y: visible;
+	overflow-x: visible;
+}
+
 .sidebarBackground {
 	width: 100%;
 	height: 100%;
@@ -172,4 +179,30 @@
 	
 	// color:#00000000
 	// background-color: #000000c0;
+}
+
+.submenuBox > div {
+	background: linear-gradient(135deg, rgb(30 30 90) 0%, rgb(127 47 30) 100%);
+}
+
+.submenuEntry {
+	color: #fff;
+	text-shadow: 2px 2px 2px #000;
+
+	border-top: 1px solid #444444dd;
+
+
+	&:hover {
+		color: #000;
+
+	}
+}
+
+.mainMenuButton {
+	color: #fff;
+	text-shadow: 1px 1px 1px #000;
+
+	&:hover{
+		color: #000;
+	}
 }
