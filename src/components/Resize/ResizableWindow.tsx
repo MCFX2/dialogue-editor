@@ -270,7 +270,10 @@ export const ResizableWindow = ({
 							x: forcedWidth ?? windowLayout.size.x,
 							y: forcedHeight ?? windowLayout.size.y,
 						}}
-						windowPos={windowLayout.position}
+						windowPos={{
+							x: forcedPositionX ?? windowLayout.position.x,
+							y: forcedPositionY ?? windowLayout.position.y,
+						}}
 						getValidatedSize={getValidatedSize}
 					/>
 				)}
@@ -302,7 +305,10 @@ export const ResizableWindow = ({
 							x: forcedWidth ?? windowLayout.size.x,
 							y: forcedHeight ?? windowLayout.size.y,
 						}}
-						windowPos={windowLayout.position}
+						windowPos={{
+							x: forcedPositionX ?? windowLayout.position.x,
+							y: forcedPositionY ?? windowLayout.position.y,
+						}}
 						getValidatedSize={getValidatedSize}
 					/>
 				)}

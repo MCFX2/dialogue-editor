@@ -3,7 +3,6 @@ export declare const addButtonField: string;
 export declare const addMenu: string;
 export declare const addMenuList: string;
 export declare const controlContainer: string;
-export declare const controlFieldEditable: string;
 export declare const controlLabelEditable: string;
 export declare const controlSeparator: string;
 export declare const generalControl: string;

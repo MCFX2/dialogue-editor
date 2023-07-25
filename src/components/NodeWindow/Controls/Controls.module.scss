@@ -1,3 +1,4 @@
+@use '../NodeWindow.module.scss' as nodeWindow;
 
 .nodeControlContainer
 {
@@ -98,4 +99,24 @@
 {
 	width: 32px;
 	height: 32px;
+}
+
+.textField
+{
+	@extend .generalControl;
+	width: 100%;
+
+	margin-right: 16px;
+
+	font-family: 'Monocraft';
+}
+
+.numberField
+{
+	@extend .generalControl;
+	width: 100%;
+
+	margin-right: 16px;
+
+	font-family: 'Monocraft';
 }

@@ -1,8 +1,22 @@
 import { FC } from "react";
 import styles from "./NodeWindow.module.scss";
 import { NodeHandle } from "../../App";
-import { DefaultDraggableNodeControl, DraggableNodeControl } from "./Controls/DraggableNodeControl";
-import { BooleanNodeControl, DefaultBooleanControl } from "./Controls/BooleanNodeControl";
+import {
+	DefaultDraggableNodeControl,
+	DraggableNodeControl,
+} from "./Controls/DraggableNodeControl";
+import {
+	BooleanNodeControl,
+	DefaultBooleanControl,
+} from "./Controls/BooleanNodeControl";
+import {
+	DefaultTextControl,
+	TextNodeControl,
+} from "./Controls/TextNodeControl";
+import {
+	DefaultNumberControl,
+	NumberNodeControl,
+} from "./Controls/NumberNodeControl";
 
 export interface NodeControl {
 	type:
@@ -91,63 +105,52 @@ export const ControlElement: FC<ControlElementProps> = ({
 	onSliderGrab,
 	windowWidth,
 	nodeTable,
-	pickUpControl
+	pickUpControl,
 }) => {
 	const controlWidth = windowWidth - 140 - sliderOffset;
 
-	return <ControlHolder
-		onSliderGrab={onSliderGrab}
-		sliderOffset={sliderOffset}
-		setText={setLabel}
-		text={node.label}
-	>
-		{node.type === "boolean" ? (
-			<BooleanNodeControl
-				controlWidth={controlWidth}
-				setValue={setValue}
-				value={node.content}
-			/>
-		) : node.type === "node" ? (
-			<DraggableNodeControl
-				nodeTable={nodeTable}
-				width={controlWidth}
+	return (
+		<ControlHolder
+			onSliderGrab={onSliderGrab}
+			sliderOffset={sliderOffset}
+			setText={setLabel}
+			text={node.label}
+		>
+			{node.type === "boolean" ? (
+				<BooleanNodeControl
+					controlWidth={controlWidth}
+					setValue={setValue}
+					value={node.content}
+				/>
+			) : node.type === "node" ? (
+				<DraggableNodeControl
+					nodeTable={nodeTable}
+					width={controlWidth}
 					value={node.content}
 					pickUpControl={() => pickUpControl(node)}
-			/>
-		) : (
-			<input
-				className={styles.controlFieldEditable}
-				placeholder="(value)"
-				value={node.content ?? ""}
-				onChange={(e) => setValue(e.target.value)}
-				type={node.type === "number" ? "number" : "text"}
-				style={{
-					width: `${controlWidth}px`,
-				}}
-			/>
-		)}
-	</ControlHolder>;
-}
+				/>
+			) : node.type === "string" ? (
+				<TextNodeControl
+					value={node.content}
+					setValue={setValue}
+					controlWidth={controlWidth}
+				/>
+			) : node.type === "number" ? (
+				<NumberNodeControl
+					value={node.content}
+					setValue={setValue}
+					controlWidth={controlWidth}
+				/>
+			) : (
+				<p>UNKNOWN CONTROL TYPE "{node.type}"!</p>
+			)}
+		</ControlHolder>
+	);
+};
 
 export const DefaultControls: NodeControl[] = [
-	{
-		label: "",
-		type: "number",
-		humanName: "Number",
-		index: -1,
-		uuid: "",
-		parent: "",
-		renderHeight: 48,
-	},
-	{
-		label: "",
-		type: "string",
-		humanName: "Text",
-		index: -1,
-		uuid: "",
-		parent: "",
-		renderHeight: 48,
-	},
+	DefaultNumberControl,
+	DefaultTextControl,
 	DefaultBooleanControl,
 	DefaultDraggableNodeControl,
-]
+];

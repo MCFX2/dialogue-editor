@@ -155,6 +155,7 @@ export const ResizeEdge = (props: ResizeEdgeProps) => {
 
 	const moveHandler = (e: MouseEvent) => {
 		if (isDragging) {
+			e.preventDefault();
 			const moveDelta = {
 				x: allowHorizontalResizing ? (Math.max(e.clientX, 0) - startDragPos.x) : 0,
 				y: allowVerticalResizing ? (Math.max(e.clientY, 0) - startDragPos.y) : 0
@@ -212,10 +213,6 @@ export const ResizeEdge = (props: ResizeEdgeProps) => {
 };
 
 export const ResizeEdgeContainer = (props: ResizeEdgeContainerProps) => {
-	/* let styleOverride = {
-
-	}; */
-
 	let styleOverride: React.CSSProperties = {
 		flexDirection: undefined, // defaults to row
 		height: undefined,

@@ -23,6 +23,7 @@ export const ResizableTitlebar = (props: any) => {
 
 	const moveHandler = (move: MouseEvent) => {
 		if (isDragging) {
+			move.preventDefault();
 			props.setWindowLayout({
 				pos: {
 					x: windowStartPos.x + move.clientX - startPos.x,
