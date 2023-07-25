@@ -79,6 +79,7 @@ export interface ControlElementProps {
 	onSliderGrab: (e: React.MouseEvent) => void;
 	windowWidth: number;
 	nodeTable: { [uuid: string]: NodeHandle };
+	pickUpControl: (control: NodeControl) => void;
 }
 
 // generates a JSX element for a primitive control
@@ -90,6 +91,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 	onSliderGrab,
 	windowWidth,
 	nodeTable,
+	pickUpControl
 }) => {
 	const controlWidth = windowWidth - 140 - sliderOffset;
 
@@ -109,7 +111,8 @@ export const ControlElement: FC<ControlElementProps> = ({
 			<DraggableNodeControl
 				nodeTable={nodeTable}
 				width={controlWidth}
-				value={node.content}
+					value={node.content}
+					pickUpControl={() => pickUpControl(node)}
 			/>
 		) : (
 			<input

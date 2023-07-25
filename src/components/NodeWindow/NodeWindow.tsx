@@ -23,6 +23,7 @@ export interface NodeWindowProps {
 	setWidth: (newWidth: number) => void;
 	setTitle: (title: string) => void;
 	nodeTable: { [uuid: string]: NodeHandle };
+	pickUpControl: (control: NodeControl) => void;
 }
 
 export const NodeWindow: FC<NodeWindowProps> = (props) => {
@@ -112,6 +113,7 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 						newControl.content = newValue;
 						props.updateControl(control.index, newControl);
 					}}
+					pickUpControl={props.pickUpControl}
 				/>
 			))}
 			<div className={styles.addButtonField}>

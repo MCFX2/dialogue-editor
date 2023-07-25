@@ -17,8 +17,20 @@ export interface NodeHandle {
 }
 
 function App() {
+	// some people might say "this is a lot of state for one component"
+	// to which i say "yes, yes it is"
+	// unfortunately most of this stuff can't be broken up any further
+	// without adding a lot of complexity
+
 	const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
 	const [grabbing, setGrabbing] = useState(false);
+	const [draggingControl, setDraggingControl] = useState<NodeControl | undefined>(
+		undefined
+	);
+	const [targetNode, setTargetNode] = useState<NodeHandle | undefined>(
+		undefined
+	);
+
 	const worldSize = { width: 2160, height: 1528 };
 	const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
@@ -36,8 +48,8 @@ function App() {
 
 	const [screenFileList, setScreenFileList] = useState<
 		FileSystemHandle[] | undefined
-		>(undefined);
-	
+	>(undefined);
+
 	const [unsaved, setUnsaved] = useState(false);
 
 	const clampBgPosition = (x: number, y: number) => {
@@ -50,8 +62,40 @@ function App() {
 	};
 
 	// click and drag to move the background
+	// we also hijack these hooks for parts of the node drag and drop feature
 	useMouseMove((e) => {
-		if (grabbing) {
+		if (draggingControl !== undefined) {
+			e.preventDefault();
+			// determine which node our mouse is over
+			const candidateNodes = screen.filter((n) => {
+				// check width first since that's cheaper
+				if (
+					mousePos.x < (n.worldPosition.x + cameraPosition.x) ||
+					mousePos.x > (n.worldPosition.x + cameraPosition.x + n.width)
+				) {
+					return false;
+				}
+				// then height
+				const calculatedHeight = n.controls.reduce<number>((prev, cur) => {
+					return prev + cur.renderHeight;
+				}, 96);
+
+				return (
+					(mousePos.y > (n.worldPosition.y + cameraPosition.y)) &&
+					(mousePos.y < (n.worldPosition.y + cameraPosition.y + calculatedHeight))
+				);
+			});
+
+			if (candidateNodes.length === 0) {
+				targetNode && setTargetNode(undefined);
+			} else {
+				// todo: have smarter logic for determining which node the user meant
+				const topNode = candidateNodes[0];
+				if (targetNode !== topNode) {
+					setTargetNode(topNode);
+				}
+			}
+		} else if (grabbing) {
 			e.preventDefault();
 			setCameraPosition((prev) => ({
 				x: prev.x + e.movementX,
@@ -63,10 +107,27 @@ function App() {
 	});
 
 	useMouseRelease((e) => {
-		if (grabbing && e.button === 0) {
-			setGrabbing(false);
+		if (e.button === 0) {
+			grabbing && setGrabbing(false);
+			if (draggingControl !== undefined) {
+				if (targetNode !== undefined && targetNode.uuid !== draggingControl.parent) {
+					// configure the control
+					draggingControl.content = targetNode.uuid;
+					updateScreen([...screen]);
+				}
+				else {
+					draggingControl.content = undefined;
+					updateScreen([...screen]);
+				}
+				setDraggingControl(undefined);
+			}
 		}
 	});
+
+	const pickUpControl = (node: NodeControl) => {
+		setDraggingControl(node);
+		grabbing && setGrabbing(false);
+	};
 
 	const [screen, updateScreen] = useState<NodeHandle[]>([]);
 
@@ -271,7 +332,9 @@ function App() {
 		(prev, cur) => {
 			prev[cur.uuid] = cur; // this is not particularly efficient but i don't care
 			return prev;
-		}, {});
+		},
+		{}
+	);
 
 	return (
 		<>
@@ -307,6 +370,8 @@ function App() {
 					nodeConnections={screen.reduce<NodeControl[]>((prev, cur) => {
 						return [...prev, ...cur.controls.filter((c) => c.type === "node")];
 					}, [])}
+					mousePos={mousePos}
+					newTargetFrom={draggingControl}
 				/>
 				<div
 					className={styles.mainContainer}
@@ -361,6 +426,7 @@ function App() {
 								!unsaved && setUnsaved(true);
 								updateScreen([...screen]);
 							}}
+							pickUpControl={pickUpControl}
 							title={node.name}
 							nodeTable={nodeTable}
 						/>

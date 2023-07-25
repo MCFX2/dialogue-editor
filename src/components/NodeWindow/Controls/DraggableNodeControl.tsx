@@ -17,6 +17,7 @@ export const DefaultDraggableNodeControl: NodeControl = {
 
 export interface DraggableNodeControlProps {
 	nodeTable: { [uuid: string]: NodeHandle };
+	pickUpControl: () => void;
 	width: number;
 	value: any;
 }
@@ -25,6 +26,7 @@ export const DraggableNodeControl: FC<DraggableNodeControlProps> = ({
 	value,
 	width,
 	nodeTable,
+	pickUpControl,
 }) => {
 	const hasTarget = nodeTable[value] !== undefined;
 	const label = nodeTable[value]?.name ?? "(none)";
@@ -47,6 +49,7 @@ export const DraggableNodeControl: FC<DraggableNodeControlProps> = ({
 				className={
 					hasTarget ? styles.nodeDragSelectorFull : styles.nodeDragSelectorEmpty
 				}
+				onMouseDown={pickUpControl}
 			/>
 		</div>
 	);

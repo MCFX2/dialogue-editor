@@ -10,13 +10,53 @@ export interface CanvasProps {
 
 	nodeConnections: NodeControl[];
 	nodes: { [uuid: string]: NodeHandle };
+
+	mousePos: { x: number; y: number };
+	newTargetFrom?: NodeControl;
 }
 
 export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 
 	useEffect(() => {
-		const draw = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
+		const drawBezier = (
+			start: { x: number; y: number },
+			end: { x: number; y: number },
+			ctx: CanvasRenderingContext2D
+		) => {
+			const delta = { x: end.x - start.x, y: end.y - start.y };
+			ctx.strokeStyle = "black";
+			const shadowOffset = 2;
+			ctx.beginPath();
+			ctx.moveTo(start.x, start.y + shadowOffset);
+			ctx.bezierCurveTo(
+				start.x + delta.x * 0.4,
+				start.y + shadowOffset,
+				start.x + delta.x * 0.6,
+				end.y + shadowOffset,
+				end.x,
+				end.y + shadowOffset
+			);
+			ctx.stroke();
+
+			ctx.strokeStyle = "white";
+			ctx.beginPath();
+			ctx.moveTo(start.x, start.y);
+			ctx.bezierCurveTo(
+				start.x + delta.x * 0.4,
+				start.y,
+				start.x + delta.x * 0.6,
+				end.y,
+				end.x,
+				end.y
+			);
+			ctx.stroke();
+		};
+
+		const render = (
+			canvas: HTMLCanvasElement,
+			ctx: CanvasRenderingContext2D
+		) => {
 			if (window.innerHeight !== canvas.height) {
 				canvas.height = window.innerHeight;
 			}
@@ -54,34 +94,28 @@ export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
 						y: rawEnd.y + props.cameraPosition.y + 16,
 					};
 
-					const delta = { x: end.x - start.x, y: end.y - start.y };
-					ctx.strokeStyle = "black";
-					const shadowOffset = 2;
-					ctx.beginPath();
-					ctx.moveTo(start.x, start.y + shadowOffset);
-					ctx.bezierCurveTo(
-						start.x + delta.x * 0.4,
-						start.y + shadowOffset,
-						start.x + delta.x * 0.6,
-						end.y + shadowOffset,
-						end.x,
-						end.y + shadowOffset
-					);
-					ctx.stroke();
-
-					ctx.strokeStyle = "white";
-					ctx.beginPath();
-					ctx.moveTo(start.x, start.y);
-					ctx.bezierCurveTo(
-						start.x + delta.x * 0.4,
-						start.y,
-						start.x + delta.x * 0.6,
-						end.y,
-						end.x,
-						end.y
-					);
-					ctx.stroke();
+					drawBezier(start, end, ctx);
 				}
+			}
+
+			if (props.newTargetFrom !== undefined) {
+				const parent = props.nodes[props.newTargetFrom.parent];
+
+				const calculatedHeight = parent.controls.reduce<number>(
+					(prev, cur) => {
+						return cur.index <= props.newTargetFrom!.index
+							? prev + cur.renderHeight
+							: prev;
+					}, 20
+				);
+
+				const rawStart = parent.worldPosition;
+				const start = {
+					x: rawStart.x + parent.width + props.cameraPosition.x,
+					y: rawStart.y + calculatedHeight + props.cameraPosition.y,
+				};
+
+				drawBezier(start, props.mousePos, ctx);
 			}
 		};
 
@@ -89,7 +123,7 @@ export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
 		if (canvas) {
 			const context = canvas.getContext("2d");
 			if (context) {
-				draw(canvas, context);
+				render(canvas, context);
 			} else {
 				console.error("Failed to get canvas context");
 			}
