@@ -36,6 +36,7 @@ export const ResizableTitlebar = (props: any) => {
 	let styleOverride = {
 		height: `${props.height}px`,
 		minHeight: `${props.height}px`,
+		boxShadow: props.showHighlight ? '0px 0px 0px 1px yellow' : undefined,
 	};
 
 	// we don't use the global click handler

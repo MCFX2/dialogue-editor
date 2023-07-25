@@ -24,6 +24,7 @@ export interface NodeWindowProps {
 	setTitle: (title: string) => void;
 	nodeTable: { [uuid: string]: NodeHandle };
 	pickUpControl: (control: NodeControl) => void;
+	isSelected: boolean;
 }
 
 export const NodeWindow: FC<NodeWindowProps> = (props) => {
@@ -81,6 +82,7 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 			defaultYPos={props.renderPosition.y}
 			forcedHeight={combinedControlHeight + 96}
 			forcedWidth={props.width}
+			showHighlight={props.isSelected}
 			titlebarChildren={
 				props.title === undefined ? undefined : (
 					<input

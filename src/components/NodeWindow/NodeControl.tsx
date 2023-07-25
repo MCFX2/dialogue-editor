@@ -14,6 +14,7 @@ import {
 	TextNodeControl,
 } from "./Controls/TextNodeControl";
 import {
+	DefaultIntegerControl,
 	DefaultNumberControl,
 	NumberNodeControl,
 } from "./Controls/NumberNodeControl";
@@ -140,6 +141,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 					value={node.content}
 					setValue={setValue}
 					controlWidth={controlWidth}
+					restriction={node.restrictionIdentifier}
 				/>
 			) : (
 				<p>UNKNOWN CONTROL TYPE "{node.type}"!</p>
@@ -150,6 +152,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 
 export const DefaultControls: NodeControl[] = [
 	DefaultNumberControl,
+	DefaultIntegerControl,
 	DefaultTextControl,
 	DefaultBooleanControl,
 	DefaultDraggableNodeControl,

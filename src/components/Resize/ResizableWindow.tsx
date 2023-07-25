@@ -39,6 +39,8 @@ export interface ResizableWindowProps {
 	forcedHeight?: number;
 	forcedWidth?: number;
 
+	showHighlight?: boolean;
+
 	titlebarChildren?: any;
 	children?: any;
 }
@@ -75,6 +77,8 @@ export const ResizableWindow = ({
 
 	forcedHeight,
 	forcedWidth,
+
+	showHighlight,
 
 	ignoreWindowResize = false,
 
@@ -245,13 +249,15 @@ export const ResizableWindow = ({
 		top: `${forcedPositionY ?? windowLayout.position.y}px`,
 	};
 
-	let contentAreaCss = {
+	let contentAreaCss: React.CSSProperties = {
 		height: windowLayout.isCollapsed
 			? 0
 			: `${
 					(forcedHeight === undefined ? windowLayout.size.y : forcedHeight) -
 					titlebarHeight
 			  }px`,
+
+		boxShadow: showHighlight ? "0px 0px 0px 1px yellow" : undefined,
 	};
 
 	return (
@@ -285,6 +291,7 @@ export const ResizableWindow = ({
 							y: forcedPositionY ?? windowLayout.position.y,
 						}}
 						height={titlebarHeight}
+						showHighlight={showHighlight}
 					>
 						{titlebarChildren}
 					</ResizableTitlebar>

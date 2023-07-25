@@ -24,9 +24,9 @@ function App() {
 
 	const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
 	const [grabbing, setGrabbing] = useState(false);
-	const [draggingControl, setDraggingControl] = useState<NodeControl | undefined>(
-		undefined
-	);
+	const [draggingControl, setDraggingControl] = useState<
+		NodeControl | undefined
+	>(undefined);
 	const [targetNode, setTargetNode] = useState<NodeHandle | undefined>(
 		undefined
 	);
@@ -70,8 +70,8 @@ function App() {
 			const candidateNodes = screen.filter((n) => {
 				// check width first since that's cheaper
 				if (
-					mousePos.x < (n.worldPosition.x + cameraPosition.x) ||
-					mousePos.x > (n.worldPosition.x + cameraPosition.x + n.width)
+					mousePos.x < n.worldPosition.x + cameraPosition.x ||
+					mousePos.x > n.worldPosition.x + cameraPosition.x + n.width
 				) {
 					return false;
 				}
@@ -81,8 +81,8 @@ function App() {
 				}, 96);
 
 				return (
-					(mousePos.y > (n.worldPosition.y + cameraPosition.y)) &&
-					(mousePos.y < (n.worldPosition.y + cameraPosition.y + calculatedHeight))
+					mousePos.y > n.worldPosition.y + cameraPosition.y &&
+					mousePos.y < n.worldPosition.y + cameraPosition.y + calculatedHeight
 				);
 			});
 
@@ -110,12 +110,14 @@ function App() {
 		if (e.button === 0) {
 			grabbing && setGrabbing(false);
 			if (draggingControl !== undefined) {
-				if (targetNode !== undefined && targetNode.uuid !== draggingControl.parent) {
+				if (
+					targetNode !== undefined &&
+					targetNode.uuid !== draggingControl.parent
+				) {
 					// configure the control
 					draggingControl.content = targetNode.uuid;
 					updateScreen([...screen]);
-				}
-				else {
+				} else {
 					draggingControl.content = undefined;
 					updateScreen([...screen]);
 				}
@@ -429,6 +431,11 @@ function App() {
 							pickUpControl={pickUpControl}
 							title={node.name}
 							nodeTable={nodeTable}
+							isSelected={
+								draggingControl !== undefined &&
+								targetNode?.uuid === node.uuid &&
+								draggingControl.parent !== node.uuid
+							}
 						/>
 					))}
 				</div>
