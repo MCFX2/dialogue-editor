@@ -1,5 +1,8 @@
 import { FC } from "react";
 import styles from "./NodeWindow.module.scss";
+import { NodeHandle } from "../../App";
+import { DefaultDraggableNodeControl, DraggableNodeControl } from "./Controls/DraggableNodeControl";
+import { BooleanNodeControl, DefaultBooleanControl } from "./Controls/BooleanNodeControl";
 
 export interface NodeControl {
 	type:
@@ -68,75 +71,62 @@ const ControlHolder: FC<ControlHolderProps> = ({
 	);
 };
 
-// generates a JSX element for a primitive control
-export function primitiveElement(
-	node: NodeControl
-): (
-	uuid: string,
-	label: string,
-	setLabel: (label: string) => void,
-	value: any,
-	setValue: (value: any) => void,
-	onSliderGrab: (e: React.MouseEvent) => void,
-	sliderOffset: number,
-	windowWidth: number
-) => JSX.Element {
-	return (
-		uuid: string,
-		label: string,
-		setLabel: (label: string) => void,
-		value: any,
-		setValue: (value: any) => void,
-		onSliderGrab: (e: React.MouseEvent) => void,
-		sliderOffset: number,
-		windowWidth: number
-	) => (
-		<ControlHolder
-			key={uuid}
-			onSliderGrab={onSliderGrab}
-			sliderOffset={sliderOffset}
-			setText={setLabel}
-			text={label}
-		>
-			{node.type === "boolean" ? (
-				<div
-					style={{
-						display: "flex",
-						alignItems: "start",
-						justifyContent: "start",
-						padding: "1px 2px",
-						height: "32px",
-						width: `${windowWidth - 140 - sliderOffset}px`,
-					}}
-				>
-					<input
-						checked={value ?? false}
-						onChange={(e) => setValue(e.target.checked)}
-						type="checkbox"
-						style={{
-							height: "32px",
-							width: "32px",
-							padding: "0",
-						}}
-					/>
-				</div>
-			) : (
-				<input
-					className={styles.controlFieldEditable}
-					placeholder="(value)"
-					value={value ?? ''}
-					onChange={(e) => setValue(e.target.value)}
-					type={node.type === "number" ? "number" : "text"}
-					style={{
-						width: `${windowWidth - 140 - sliderOffset}px`,
-					}}
-				/>
-			)}
-		</ControlHolder>
-	);
+export interface ControlElementProps {
+	node: NodeControl;
+	setLabel: (label: string) => void;
+	setValue: (value: any) => void;
+	sliderOffset: number;
+	onSliderGrab: (e: React.MouseEvent) => void;
+	windowWidth: number;
+	nodeTable: { [uuid: string]: NodeHandle };
 }
 
-export const PrimitiveControls: NodeControl[] = [
+// generates a JSX element for a primitive control
+export const ControlElement: FC<ControlElementProps> = ({
+	node,
+	setLabel,
+	setValue,
+	sliderOffset,
+	onSliderGrab,
+	windowWidth,
+	nodeTable,
+}) => {
+	const controlWidth = windowWidth - 140 - sliderOffset;
+
+	return <ControlHolder
+		onSliderGrab={onSliderGrab}
+		sliderOffset={sliderOffset}
+		setText={setLabel}
+		text={node.label}
+	>
+		{node.type === "boolean" ? (
+			<BooleanNodeControl
+				controlWidth={controlWidth}
+				setValue={setValue}
+				value={node.content}
+			/>
+		) : node.type === "node" ? (
+			<DraggableNodeControl
+				nodeTable={nodeTable}
+				width={controlWidth}
+				value={node.content}
+			/>
+		) : (
+			<input
+				className={styles.controlFieldEditable}
+				placeholder="(value)"
+				value={node.content ?? ""}
+				onChange={(e) => setValue(e.target.value)}
+				type={node.type === "number" ? "number" : "text"}
+				style={{
+					width: `${controlWidth}px`,
+				}}
+			/>
+		)}
+	</ControlHolder>;
+}
+
+export const DefaultControls: NodeControl[] = [
 	{
 		label: "",
 		type: "number",
@@ -155,22 +145,6 @@ export const PrimitiveControls: NodeControl[] = [
 		parent: "",
 		renderHeight: 48,
 	},
-	{
-		label: "",
-		type: "boolean",
-		humanName: "Checkbox",
-		index: -1,
-		uuid: "",
-		parent: "",
-		renderHeight: 48,
-	},
-	{
-		label: "",
-		type: "node",
-		humanName: "Node",
-		index: -1,
-		uuid: "",
-		parent: "",
-		renderHeight: 48,
-	},
-];
+	DefaultBooleanControl,
+	DefaultDraggableNodeControl,
+]

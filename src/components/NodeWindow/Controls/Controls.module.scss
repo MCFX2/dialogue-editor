@@ -1,0 +1,101 @@
+
+.nodeControlContainer
+{
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+
+	width: 100%;
+	height: 100%;
+}
+
+.nodeLabel
+{
+	font-family: 'Monocraft';
+
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+
+	line-height: 32px;
+	margin-left: 2px;
+	color: #eee;
+	
+	user-select: none;
+
+	height: 32px;
+}
+
+.nodeDragSelector
+{
+	width: 32px;
+	height: 32px;
+	min-width: 32px;
+
+	margin-left: 16px;
+	margin-right: 16px;
+
+	justify-self: flex-end;
+
+	border-color: #000000;
+	border-width: 2px;
+	border-style: solid;
+	border-radius: 4px;
+
+	&:hover {
+		cursor: grab;
+		transition: all;
+		transition-duration: 100ms;
+		transition-timing-function: ease;
+	}
+}
+
+.nodeDragSelectorEmpty
+{
+	@extend .nodeDragSelector;
+
+	background-color: #00000000;
+
+	&:hover
+	{
+		background-color: #00000066;
+	}
+
+	&:active
+	{
+		background-color: #000000aa;
+	}
+}
+
+.nodeDragSelectorFull
+{
+	@extend .nodeDragSelector;
+
+	background-color: #ffffff;
+
+	&:hover
+	{
+		background-color: #ffffff77;
+	}
+
+	&:active
+	{
+		background-color: #ffffff33;
+	}
+}
+
+.boolCheckboxContainer
+{
+	display: flex;
+	align-items: start;
+	justify-content: 'start';
+	padding: 1px 2px;
+	height: 32px;
+}
+
+.boolCheckbox
+{
+	width: 32px;
+	height: 32px;
+}

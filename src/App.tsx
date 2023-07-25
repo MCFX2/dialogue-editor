@@ -52,6 +52,7 @@ function App() {
 	// click and drag to move the background
 	useMouseMove((e) => {
 		if (grabbing) {
+			e.preventDefault();
 			setCameraPosition((prev) => ({
 				x: prev.x + e.movementX,
 				y: prev.y + e.movementY,
@@ -266,6 +267,12 @@ function App() {
 		};
 	});
 
+	const nodeTable = screen.reduce<{ [uuid: string]: NodeHandle }>(
+		(prev, cur) => {
+			prev[cur.uuid] = cur; // this is not particularly efficient but i don't care
+			return prev;
+		}, {});
+
 	return (
 		<>
 			<div className={styles.appBgContainer}>
@@ -296,13 +303,7 @@ function App() {
 				/>
 				<Canvas
 					cameraPosition={cameraPosition}
-					nodes={screen.reduce<{ [uuid: string]: NodeHandle }>(
-						(prev, cur) => {
-							prev[cur.uuid] = cur; // this is not particularly efficient but i don't care
-							return prev;
-						},
-						{}
-					)}
+					nodes={nodeTable}
 					nodeConnections={screen.reduce<NodeControl[]>((prev, cur) => {
 						return [...prev, ...cur.controls.filter((c) => c.type === "node")];
 					}, [])}
@@ -361,6 +362,7 @@ function App() {
 								updateScreen([...screen]);
 							}}
 							title={node.name}
+							nodeTable={nodeTable}
 						/>
 					))}
 				</div>

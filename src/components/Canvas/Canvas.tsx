@@ -25,7 +25,6 @@ export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
 				canvas.width = window.innerWidth;
 			}
 
-			ctx.strokeStyle = "white";
 			ctx.lineWidth = 4;
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -56,6 +55,21 @@ export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
 					};
 
 					const delta = { x: end.x - start.x, y: end.y - start.y };
+					ctx.strokeStyle = "black";
+					const shadowOffset = 2;
+					ctx.beginPath();
+					ctx.moveTo(start.x, start.y + shadowOffset);
+					ctx.bezierCurveTo(
+						start.x + delta.x * 0.4,
+						start.y + shadowOffset,
+						start.x + delta.x * 0.6,
+						end.y + shadowOffset,
+						end.x,
+						end.y + shadowOffset
+					);
+					ctx.stroke();
+
+					ctx.strokeStyle = "white";
 					ctx.beginPath();
 					ctx.moveTo(start.x, start.y);
 					ctx.bezierCurveTo(
@@ -88,7 +102,7 @@ export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
 		<canvas
 			style={{
 				position: "fixed",
-				zIndex: 100,
+				zIndex: 2,
 				pointerEvents: "none",
 			}}
 			ref={canvasRef}

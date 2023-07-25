@@ -4,6 +4,9 @@ import { ResizeEdgeContainer, ResizeEdgeSide } from "./ResizeEdge";
 import { ResizableTitlebar } from "./ResizeTitlebar";
 import styles from "./Resize.module.css";
 
+// you might be wondering why this is so complicated
+// me too
+
 export interface ResizableWindowProps {
 	minWidth?: number;
 	maxWidth?: number;
@@ -34,10 +37,17 @@ export interface ResizableWindowProps {
 	ignoreWindowResize?: boolean;
 
 	forcedHeight?: number;
+	forcedWidth?: number;
 
 	titlebarChildren?: any;
 	children?: any;
 }
+
+// for real though, this started as a fairly simple/naive (but clean) implementation of a window
+// and as time has passed, we've needed more and more external control and extra features
+// built into this poor little component
+// at this point it's a shambling mound of extra hacks and features that are all very specific to our use case
+// and it's probably not worth ever trying to use this for anything else
 
 export const ResizableWindow = ({
 	minWidth = 400,
@@ -64,6 +74,7 @@ export const ResizableWindow = ({
 	forcedPositionY = undefined,
 
 	forcedHeight,
+	forcedWidth,
 
 	ignoreWindowResize = false,
 
@@ -113,7 +124,10 @@ export const ResizableWindow = ({
 	// we use one combined state for this to avoid triggering multiple re-renders when several of these are changed at once
 	const [windowLayout, setWindowLayout] = useState({
 		size: {
-			x: clamp(defaultWidth, minWidth, window.innerWidth),
+			x:
+				forcedWidth === undefined
+					? clamp(defaultWidth, minWidth, window.innerWidth)
+					: forcedWidth,
 			y: forcedHeight === undefined ? defaultHeight : forcedHeight,
 		},
 		collapsedSize: {
@@ -145,11 +159,12 @@ export const ResizableWindow = ({
 			// don't allow vertical resizing when collapsed
 			// todo: track the attempted change so we can auto-collapse/uncollapse at the right time
 			y:
-				forcedHeight === undefined
-					? collapsed
-						? windowLayout.size.y
-						: clamp(size.y, minHeight, realMaxHeight)
-					: forcedHeight,
+				forcedHeight === undefined // the reason this has to be here is because,
+					? collapsed // during a reload event, all our properties get reset BUT
+						? windowLayout.size.y // we don't actually know that happened from here
+						: clamp(size.y, minHeight, realMaxHeight) // so we have a mismatch between
+					: forcedHeight, // the "outside world" (props) and our home (state).
+			// yay
 		};
 
 		const finalPos = {
@@ -211,10 +226,12 @@ export const ResizableWindow = ({
 
 	let windowLayoutCss = {
 		width: `${
-			(windowLayout.isCollapsed
-				? windowLayout.collapsedSize
-				: windowLayout.size
-			).x
+			forcedWidth === undefined
+				? (windowLayout.isCollapsed
+						? windowLayout.collapsedSize
+						: windowLayout.size
+				  ).x
+				: forcedWidth
 		}px`,
 		height: `${
 			forcedHeight === undefined
@@ -244,22 +261,15 @@ export const ResizableWindow = ({
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
 		>
-			{allowVerticalResize && !windowLayout.isCollapsed && (
-				<ResizeEdgeContainer
-					side={ResizeEdgeSide.Top}
-					includeCorners
-					setWindowLayout={requestWindowLayout}
-					windowSize={windowLayout.size}
-					windowPos={windowLayout.position}
-					getValidatedSize={getValidatedSize}
-				/>
-			)}
 			<div className={styles.resizeWindowCenter}>
 				{allowHorizontalResize && (
 					<ResizeEdgeContainer
 						side={ResizeEdgeSide.Left}
 						setWindowLayout={requestWindowLayout}
-						windowSize={windowLayout.size}
+						windowSize={{
+							x: forcedWidth ?? windowLayout.size.x,
+							y: forcedHeight ?? windowLayout.size.y,
+						}}
 						windowPos={windowLayout.position}
 						getValidatedSize={getValidatedSize}
 					/>
@@ -288,22 +298,15 @@ export const ResizableWindow = ({
 					<ResizeEdgeContainer
 						side={ResizeEdgeSide.Right}
 						setWindowLayout={requestWindowLayout}
-						windowSize={windowLayout.size}
+						windowSize={{
+							x: forcedWidth ?? windowLayout.size.x,
+							y: forcedHeight ?? windowLayout.size.y,
+						}}
 						windowPos={windowLayout.position}
 						getValidatedSize={getValidatedSize}
 					/>
 				)}
 			</div>
-			{allowVerticalResize && (
-				<ResizeEdgeContainer
-					side={ResizeEdgeSide.Bottom}
-					includeCorners
-					setWindowLayout={requestWindowLayout}
-					windowSize={windowLayout.size}
-					windowPos={windowLayout.position}
-					getValidatedSize={getValidatedSize}
-				/>
-			)}
 		</div>
 	);
 };

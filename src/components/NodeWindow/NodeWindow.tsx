@@ -5,10 +5,11 @@ import { SearchList } from "./SearchList";
 import { useMouseRelease } from "../MouseUtils/UseMouseClick";
 import { useMouseMove } from "../MouseUtils/UseMouseMove";
 import {
+	ControlElement,
+	DefaultControls,
 	NodeControl,
-	PrimitiveControls,
-	primitiveElement,
 } from "./NodeControl";
+import { NodeHandle } from "../../App";
 
 export interface NodeWindowProps {
 	renderPosition: { x: number; y: number };
@@ -21,13 +22,16 @@ export interface NodeWindowProps {
 	width: number;
 	setWidth: (newWidth: number) => void;
 	setTitle: (title: string) => void;
+	nodeTable: { [uuid: string]: NodeHandle };
 }
 
 export const NodeWindow: FC<NodeWindowProps> = (props) => {
 	const [showAddMenu, setShowAddMenu] = useState(false);
 	const [searchText, setSearchText] = useState("");
 
-	const [grabbingFrom, setGrabbingFrom] = useState<number | undefined>(undefined);
+	const [grabbingFrom, setGrabbingFrom] = useState<number | undefined>(
+		undefined
+	);
 	const [sliderPos, setSliderPos] = useState(0);
 	const [reqSliderPos, setReqSliderPos] = useState(0);
 
@@ -40,6 +44,7 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 
 	useMouseMove((e) => {
 		if (grabbingFrom !== undefined) {
+			e.preventDefault(); // vain attempt at preventing text selection
 			const newSliderPos = reqSliderPos + e.clientX - grabbingFrom;
 			// why can't I just use e.movementX you may ask?
 			// because it's broken in multiple browsers
@@ -69,11 +74,12 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 			forcedPositionX={props.renderPosition.x}
 			forcedPositionY={props.renderPosition.y}
 			ignoreWindowResize={true}
-			minWidth={200}
+			minWidth={240}
 			defaultWidth={400}
 			defaultXPos={props.renderPosition.x}
 			defaultYPos={props.renderPosition.y}
 			forcedHeight={combinedControlHeight + 96}
+			forcedWidth={props.width}
 			titlebarChildren={
 				props.title === undefined ? undefined : (
 					<input
@@ -88,26 +94,26 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 				props.setWidth(newSize.x);
 			}}
 		>
-			{props.controls?.map((control) =>
-				primitiveElement(control)(
-					control.uuid,
-					control.label,
-					(newLabel) => {
+			{props.controls?.map((control) => (
+				<ControlElement
+					key={control.uuid}
+					node={control}
+					nodeTable={props.nodeTable}
+					windowWidth={props.width}
+					sliderOffset={sliderPos}
+					onSliderGrab={(e) => setGrabbingFrom(e.clientX)}
+					setLabel={(newLabel) => {
 						const newControl = { ...control };
 						newControl.label = newLabel;
 						props.updateControl(control.index, newControl);
-					},
-					control.content,
-					(newContent) => {
+					}}
+					setValue={(newValue) => {
 						const newControl = { ...control };
-						newControl.content = newContent;
+						newControl.content = newValue;
 						props.updateControl(control.index, newControl);
-					},
-					(e: React.MouseEvent) => setGrabbingFrom(e.clientX),
-					sliderPos,
-					props.width
-				)
-			)}
+					}}
+				/>
+			))}
 			<div className={styles.addButtonField}>
 				{showAddMenu ? (
 					<>
@@ -128,7 +134,7 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 								props.addControl(c);
 							}}
 							searchText={searchText}
-							controlCandidates={PrimitiveControls}
+							controlCandidates={DefaultControls}
 						/>
 					</>
 				) : (
