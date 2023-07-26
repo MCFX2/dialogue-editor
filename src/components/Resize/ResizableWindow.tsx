@@ -70,7 +70,6 @@ export const ResizableWindow = ({
 	defaultYPos = 0,
 	allowOutOfBounds = false,
 	allowHorizontalResize = true,
-	allowVerticalResize = true,
 
 	forcedPositionX = undefined,
 	forcedPositionY = undefined,
@@ -206,6 +205,7 @@ export const ResizableWindow = ({
 		});
 
 		if (sizeChanged) {
+			console.log(finalSize.x);
 			onSizeChange(finalSize);
 		}
 

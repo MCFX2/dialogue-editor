@@ -1,0 +1,87 @@
+.controlContainer
+{
+	margin-top: 16px;
+	width: 100%;
+	height: 32px;
+
+	display: flex;
+
+	align-items: center;
+	justify-content: center;
+}
+
+.deleteControlButton
+{
+	min-width: 32px;
+	width: 32px;
+	height: 32px;
+
+	margin-left: 16px;
+
+	&:hover
+	{
+		background-color: #99000099;
+		cursor: pointer;
+	}
+}
+
+.generalControl
+{
+	height: 100%;
+	display: flex;
+	align-items: center;
+
+	color: #eee;
+	border:none;
+	background-color: #00000000;
+
+	user-select: none;
+
+	padding: 0;
+
+	font-family: 'Monocraft';
+
+	&:hover
+	{
+		box-shadow: 0px 0px 0px 1px #858585;
+		background-color: #00000066;
+
+		user-select: text;
+	}
+	
+	&:focus
+	{
+		color: #000000;
+		background-color: #ffffff;
+
+		outline: none;
+	}
+}
+
+.controlLabelEditable
+{
+	@extend .generalControl;
+
+
+	text-overflow: ellipsis;
+
+	margin-left: 16px;
+	text-align: right;
+
+	font-family: 'Monocraft';
+}
+
+.controlSeparator
+{
+	font-family: 'Monocraft';
+	font-size: 12px;
+
+	user-select: none;
+
+	&:hover
+	{
+		cursor: ew-resize;
+	}
+
+	color: #eee;
+}

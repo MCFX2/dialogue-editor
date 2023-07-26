@@ -42,7 +42,7 @@ export const NumberNodeControl: FC<NumberNodeControlProps> = ({
 }) => {
 	return (
 		<input
-			className={styles.textField}
+			className={styles.numberField}
 			placeholder="(value)"
 			value={value ?? ""}
 			onChange={(e) => {
@@ -55,7 +55,7 @@ export const NumberNodeControl: FC<NumberNodeControlProps> = ({
 			}}
 			type={"number"}
 			style={{
-				width: `${controlWidth}px`,
+				width: `${controlWidth - 16}px`,
 			}}
 		/>
 	);

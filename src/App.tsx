@@ -401,6 +401,10 @@ function App() {
 							}}
 							removeControl={(uuid) => {
 								node.controls = node.controls.filter((c) => c.uuid !== uuid);
+								// recalculate indices
+								node.controls.forEach((c, i) => {
+									c.index = i;
+								});
 								!unsaved && setUnsaved(true);
 								updateScreen([...screen]);
 							}}
@@ -421,6 +425,10 @@ function App() {
 								};
 								!unsaved && setUnsaved(true);
 								updateScreen([...screen]);
+							}}
+							deleteNode={() => {
+								!unsaved && setUnsaved(true);
+								updateScreen([...screen.filter((n) => n.uuid !== node.uuid)]);
 							}}
 							width={node.width}
 							setWidth={(newWidth) => {

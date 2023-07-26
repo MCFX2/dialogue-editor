@@ -30,7 +30,12 @@
 {
 	@extend .invisibleControl;
 	
-	width: 80%;
+
+	flex-grow: 1;
+
+	min-width: 80px;
+	max-width: 160px;
+
 	// min-width: fit-content;
 	// width: fit-content;
 	// width: 80%;
@@ -42,12 +47,22 @@
 
 	text-shadow: black 2px 2px 4px;
 
+	border-right: 1px solid #000000;
+
 	color: #f7f7f7;
 
 	&:focus
 	{
 		text-shadow: none;
 	}
+}
+
+.nodeWindowSafeMiddle
+{
+	display: flex;
+	flex-grow: 1;
+	
+	min-width: 80px;
 }
 
 .addButtonField
@@ -167,73 +182,26 @@
 	margin-left: 16px;
 }
 
-.controlContainer
+.windowButton
 {
-	margin-top: 16px;
-	width: 100%;
+	align-self: flex-end;
+	width: 32px;
 	height: 32px;
 
-	display: flex;
-
-	align-items: center;
-	justify-content: center;
-}
-
-.generalControl
-{
-	height: 100%;
-	display: flex;
-	align-items: center;
-
-	max-width: 100%;
-
-	color: #eee;
-	border-color: #00000000;
-	background-color: #00000000;
-
-	user-select: none;
-
 	&:hover
 	{
-		border-top-color: #767676;
-		border-left-color: #767676;
-		border-bottom-color: #858585;
-		border-right-color: #858585;
 		background-color: #00000066;
-
-		user-select: text;
-	}
-	
-	&:focus
-	{
-		color: #000000;
-		background-color: #ffffff;
-
-		outline: none;
+		cursor: pointer;
 	}
 }
 
-.controlLabelEditable
+.deleteButton
 {
-	@extend .generalControl;
-
-	margin-left: 16px;
-	text-align: right;
-
-	font-family: 'Monocraft';
+	@extend .windowButton;
+	margin-left: 8px;
 }
 
-.controlSeparator
+.compositeButton
 {
-	font-family: 'Monocraft';
-	font-size: 12px;
-
-	user-select: none;
-
-	&:hover
-	{
-		cursor: ew-resize;
-	}
-
-	color: #eee;
+	@extend .windowButton;
 }

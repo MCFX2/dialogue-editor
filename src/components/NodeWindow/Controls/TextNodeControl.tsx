@@ -33,7 +33,7 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 			onChange={(e) => setValue(e.target.value)}
 			type={"text"}
 			style={{
-				width: `${controlWidth}px`,
+				width: `${controlWidth - 16}px`,
 			}}
 		/>
 	);

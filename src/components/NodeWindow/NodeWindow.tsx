@@ -4,12 +4,10 @@ import styles from "./NodeWindow.module.scss";
 import { SearchList } from "./SearchList";
 import { useMouseRelease } from "../MouseUtils/UseMouseClick";
 import { useMouseMove } from "../MouseUtils/UseMouseMove";
-import {
-	ControlElement,
-	DefaultControls,
-	NodeControl,
-} from "./NodeControl";
+import { ControlElement, DefaultControls, NodeControl } from "./NodeControl";
 import { NodeHandle } from "../../App";
+import { SquareXIcon } from "../SVG/SquareXIcon";
+import { WindowPlusIcon } from "../SVG/WindowPlusIcon";
 
 export interface NodeWindowProps {
 	renderPosition: { x: number; y: number };
@@ -25,6 +23,7 @@ export interface NodeWindowProps {
 	nodeTable: { [uuid: string]: NodeHandle };
 	pickUpControl: (control: NodeControl) => void;
 	isSelected: boolean;
+	deleteNode: () => void;
 }
 
 export const NodeWindow: FC<NodeWindowProps> = (props) => {
@@ -53,7 +52,7 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 			// yay
 			setGrabbingFrom(e.clientX);
 			setReqSliderPos(newSliderPos);
-			if (newSliderPos > -36 && newSliderPos < 180) {
+			if (newSliderPos > -36 && newSliderPos < (props.width - 260)) {
 				setSliderPos(newSliderPos);
 			}
 		}
@@ -76,7 +75,7 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 			forcedPositionX={props.renderPosition.x}
 			forcedPositionY={props.renderPosition.y}
 			ignoreWindowResize={true}
-			minWidth={240}
+			minWidth={400}
 			defaultWidth={400}
 			defaultXPos={props.renderPosition.x}
 			defaultYPos={props.renderPosition.y}
@@ -85,12 +84,21 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 			showHighlight={props.isSelected}
 			titlebarChildren={
 				props.title === undefined ? undefined : (
-					<input
-						className={styles.nodeWindowTitle}
-						value={props.title}
-						onChange={(e) => props.setTitle(e.target.value)}
-						placeholder="(untitled)"
-					/>
+					<>
+						<input
+							className={styles.nodeWindowTitle}
+							value={props.title}
+							onChange={(e) => props.setTitle(e.target.value)}
+							placeholder="(untitled)"
+						/>
+						<div className={styles.nodeWindowSafeMiddle} />
+						<div className={styles.compositeButton}>
+							<WindowPlusIcon size={32} />
+						</div>
+						<div className={styles.deleteButton} onClick={props.deleteNode}>
+							<SquareXIcon size={32} />
+						</div>
+					</>
 				)
 			}
 			onSizeChange={(newSize) => {
@@ -115,7 +123,8 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 						newControl.content = newValue;
 						props.updateControl(control.index, newControl);
 					}}
-					pickUpControl={props.pickUpControl}
+					pickUpControl={() => props.pickUpControl(control)}
+					deleteControl={() => props.removeControl(control.uuid)}
 				/>
 			))}
 			<div className={styles.addButtonField}>

@@ -1,5 +1,5 @@
 import { FC } from "react";
-import styles from "./NodeWindow.module.scss";
+import styles from "./NodeControl.module.scss"
 import { NodeHandle } from "../../App";
 import {
 	DefaultDraggableNodeControl,
@@ -18,6 +18,7 @@ import {
 	DefaultNumberControl,
 	NumberNodeControl,
 } from "./Controls/NumberNodeControl";
+import { MinusIcon } from "../SVG/MinusIcon";
 
 export interface NodeControl {
 	type:
@@ -52,6 +53,7 @@ interface ControlHolderProps {
 	sliderOffset: number;
 	setText: (text: string) => void;
 	text: string;
+	deleteControl: () => void;
 	children: any;
 }
 
@@ -60,10 +62,14 @@ const ControlHolder: FC<ControlHolderProps> = ({
 	sliderOffset,
 	setText,
 	text,
+	deleteControl,
 	children,
 }) => {
 	return (
 		<div className={styles.controlContainer}>
+			<div className={styles.deleteControlButton} onClick={deleteControl}>
+				<MinusIcon size={32} />
+			</div>
 			<input
 				className={styles.controlLabelEditable}
 				autoFocus={true}
@@ -94,7 +100,8 @@ export interface ControlElementProps {
 	onSliderGrab: (e: React.MouseEvent) => void;
 	windowWidth: number;
 	nodeTable: { [uuid: string]: NodeHandle };
-	pickUpControl: (control: NodeControl) => void;
+	pickUpControl: () => void;
+	deleteControl: () => void;
 }
 
 // generates a JSX element for a primitive control
@@ -107,8 +114,9 @@ export const ControlElement: FC<ControlElementProps> = ({
 	windowWidth,
 	nodeTable,
 	pickUpControl,
+	deleteControl,
 }) => {
-	const controlWidth = windowWidth - 140 - sliderOffset;
+	const controlWidth = windowWidth - 172 - sliderOffset;
 
 	return (
 		<ControlHolder
@@ -116,6 +124,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 			sliderOffset={sliderOffset}
 			setText={setLabel}
 			text={node.label}
+			deleteControl={deleteControl}
 		>
 			{node.type === "boolean" ? (
 				<BooleanNodeControl
@@ -128,7 +137,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 					nodeTable={nodeTable}
 					width={controlWidth}
 					value={node.content}
-					pickUpControl={() => pickUpControl(node)}
+					pickUpControl={pickUpControl}
 				/>
 			) : node.type === "string" ? (
 				<TextNodeControl
