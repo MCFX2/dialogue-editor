@@ -24,6 +24,7 @@ export interface NodeWindowProps {
 	pickUpControl: (control: NodeControl) => void;
 	isSelected: boolean;
 	deleteNode: () => void;
+	setSelectedField: (uuid: string, oldUuid?: string) => void;
 }
 
 export const NodeWindow: FC<NodeWindowProps> = (props) => {
@@ -90,6 +91,12 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 							value={props.title}
 							onChange={(e) => props.setTitle(e.target.value)}
 							placeholder="(untitled)"
+							onFocus={() => {
+								props.setSelectedField('#nodeWindowTitleField');
+							}}
+							onBlur={() => {
+								props.setSelectedField('', '#nodeWindowTitleField');
+							}}
 						/>
 						<div className={styles.nodeWindowSafeMiddle} />
 						<div className={styles.compositeButton}>
@@ -125,6 +132,7 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 					}}
 					pickUpControl={() => props.pickUpControl(control)}
 					deleteControl={() => props.removeControl(control.uuid)}
+					setSelectedField={props.setSelectedField}
 				/>
 			))}
 			<div className={styles.addButtonField}>
@@ -136,8 +144,13 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 							onBlur={() => {
 								setShowAddMenu(false);
 								setSearchText("");
+								// todo: it might be necessary to include the node uuid here
+								props.setSelectedField('', '#addControlSearchField')
 							}}
 							onChange={(e) => setSearchText(e.target.value)}
+							onFocus={() => {
+								props.setSelectedField('#addControlSearchField')
+							}}
 						/>
 						<SearchList
 							currentIdx={props.controls?.length ?? 0}

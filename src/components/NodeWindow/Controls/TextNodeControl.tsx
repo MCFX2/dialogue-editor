@@ -18,22 +18,30 @@ export interface TextNodeControlProps {
 	value: string;
 	setValue: (newValue: string) => void;
 	controlWidth: number;
+	setSelectedField: (selected: boolean) => void;
 }
 
 export const TextNodeControl: FC<TextNodeControlProps> = ({
 	value,
 	setValue,
 	controlWidth,
+	setSelectedField,
 }) => {
 	return (
 		<input
 			className={styles.textField}
-			placeholder="(value)"
+			placeholder='""'
 			value={value ?? ""}
 			onChange={(e) => setValue(e.target.value)}
 			type={"text"}
 			style={{
 				width: `${controlWidth - 16}px`,
+			}}
+			onFocus={() => {
+				setSelectedField(true);
+			}}
+			onBlur={() => {
+				setSelectedField(false);
 			}}
 		/>
 	);

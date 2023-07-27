@@ -29,7 +29,7 @@ export const DraggableNodeControl: FC<DraggableNodeControlProps> = ({
 	pickUpControl,
 }) => {
 	const hasTarget = nodeTable[value] !== undefined;
-	const label = nodeTable[value]?.name ?? "(none)";
+	const label = nodeTable[value]?.name ?? '""';
 	return (
 		<div
 			className={styles.nodeControlContainer}

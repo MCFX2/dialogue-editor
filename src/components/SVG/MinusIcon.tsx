@@ -21,9 +21,9 @@ export const MinusIcon: FC<MinusIconProps> = ({
 			<g
 				id="Page-1"
 				stroke="#000000"
-				stroke-width="0.5"
+				strokeWidth="0.5"
 				fill="none"
-				fill-rule="evenodd"
+				fillRule="evenodd"
 			>
 				<g
 					id="Icon-Set"

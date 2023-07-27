@@ -52,6 +52,10 @@ function App() {
 
 	const [unsaved, setUnsaved] = useState(false);
 
+	// keep track of whether the user is typing in a text field
+	// so we can disable keyboard shortcuts
+	const [selectedField, setSelectedField] = useState('');
+
 	const clampBgPosition = (x: number, y: number) => {
 		const { width, height } = worldSize;
 		while (x < -width) x += width;
@@ -161,13 +165,12 @@ function App() {
 	};
 
 	const initializeWorkspaceDirectory = async () => {
-		setScreenDirectoryHandle(undefined);
-		setScreenHandle(undefined);
-		setScreenFileList(undefined);
-
 		try {
 			const handle = await showDirectoryPicker();
 			setWorkspaceHandle(handle);
+			setScreenDirectoryHandle(undefined);
+			setScreenHandle(undefined);
+			setScreenFileList(undefined);
 			return handle;
 		} catch (e) {
 			console.log(e);
@@ -219,25 +222,6 @@ function App() {
 				console.log(e);
 				return undefined;
 			}
-		}
-	};
-
-	const loadWorkspace = (handle?: FileSystemDirectoryHandle) => {
-		const usedHandle = handle ?? workspaceHandle;
-		if (usedHandle) {
-			usedHandle
-				.getFileHandle("workspace.json")
-				.then((fileHandle) => {
-					fileHandle.getFile().then((file) => {
-						file.text().then((text) => {
-							updateScreen(JSON.parse(text));
-							unsaved && setUnsaved(false);
-						});
-					});
-				})
-				.catch((e) => {
-					console.log(e);
-				});
 		}
 	};
 
@@ -299,6 +283,7 @@ function App() {
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			// keyboard shortcuts
+			if (selectedField !== '') return;
 
 			// make node
 			if (e.shiftKey && e.key.toLowerCase() === "e") {
@@ -315,13 +300,9 @@ function App() {
 			if (e.ctrlKey && e.key.toLowerCase() === "o") {
 				e.preventDefault(); // suppress browser open dialog
 				// load workspace
-				if (workspaceHandle) {
-					loadWorkspace();
-				} else {
-					initializeWorkspaceDirectory().then((h) => {
-						initializeScreenDirectory(h);
-					});
-				}
+				initializeWorkspaceDirectory().then((h) => {
+					initializeScreenDirectory(h);
+				});
 			}
 		};
 		document.addEventListener("keydown", handleKeyDown);
@@ -444,6 +425,17 @@ function App() {
 								targetNode?.uuid === node.uuid &&
 								draggingControl.parent !== node.uuid
 							}
+							setSelectedField={(uuid, oldUuid) => {
+								if (oldUuid !== undefined) {
+									// we're done typing
+									if (selectedField === oldUuid) {
+										setSelectedField('');
+									}
+								}
+								else {
+									setSelectedField(uuid);
+								}
+							}}
 						/>
 					))}
 				</div>

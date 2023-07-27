@@ -1,5 +1,5 @@
 import { FC } from "react";
-import styles from "./NodeControl.module.scss"
+import styles from "./NodeControl.module.scss";
 import { NodeHandle } from "../../App";
 import {
 	DefaultDraggableNodeControl,
@@ -54,6 +54,7 @@ interface ControlHolderProps {
 	setText: (text: string) => void;
 	text: string;
 	deleteControl: () => void;
+	setSelectedField: (selected: boolean) => void;
 	children: any;
 }
 
@@ -63,6 +64,7 @@ const ControlHolder: FC<ControlHolderProps> = ({
 	setText,
 	text,
 	deleteControl,
+	setSelectedField,
 	children,
 }) => {
 	return (
@@ -79,6 +81,12 @@ const ControlHolder: FC<ControlHolderProps> = ({
 				onChange={(e) => setText(e.target.value)}
 				style={{
 					width: `${100 + sliderOffset}px`,
+				}}
+				onFocus={() => {
+					setSelectedField(true);
+				}}
+				onBlur={() => {
+					setSelectedField(false);
 				}}
 			/>
 			<p
@@ -102,6 +110,7 @@ export interface ControlElementProps {
 	nodeTable: { [uuid: string]: NodeHandle };
 	pickUpControl: () => void;
 	deleteControl: () => void;
+	setSelectedField: (uuid: string, oldUuid?: string) => void;
 }
 
 // generates a JSX element for a primitive control
@@ -115,6 +124,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 	nodeTable,
 	pickUpControl,
 	deleteControl,
+	setSelectedField,
 }) => {
 	const controlWidth = windowWidth - 172 - sliderOffset;
 
@@ -125,6 +135,12 @@ export const ControlElement: FC<ControlElementProps> = ({
 			setText={setLabel}
 			text={node.label}
 			deleteControl={deleteControl}
+			setSelectedField={(selected) => {
+				setSelectedField(
+					selected ? (node.uuid + "#label") : "",
+					selected ? undefined : (node.uuid + "#label")
+				);
+			}}
 		>
 			{node.type === "boolean" ? (
 				<BooleanNodeControl
@@ -144,6 +160,12 @@ export const ControlElement: FC<ControlElementProps> = ({
 					value={node.content}
 					setValue={setValue}
 					controlWidth={controlWidth}
+					setSelectedField={(selected) => {
+						setSelectedField(
+							selected ? node.uuid : "",
+							selected ? undefined : node.uuid
+						);
+					}}
 				/>
 			) : node.type === "number" ? (
 				<NumberNodeControl
@@ -151,6 +173,12 @@ export const ControlElement: FC<ControlElementProps> = ({
 					setValue={setValue}
 					controlWidth={controlWidth}
 					restriction={node.restrictionIdentifier}
+					setSelectedField={(selected) => {
+						setSelectedField(
+							selected ? node.uuid : "",
+							selected ? undefined : node.uuid
+						);
+					}}
 				/>
 			) : (
 				<p>UNKNOWN CONTROL TYPE "{node.type}"!</p>
