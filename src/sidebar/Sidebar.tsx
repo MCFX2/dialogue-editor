@@ -151,12 +151,12 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 					</div>
 					{collapsed ? (
 						<div className={styles.legalText}>
-							v0.3a
+							v0.3b
 							<p>EVALUATION</p>
 						</div>
 					) : (
 						<div className={styles.legalText}>
-							v0.3-alpha (c) 2023 Rozalily
+							v0.3-beta (c) 2023 Rozalily
 							<p>For evaluation purposes only.</p>
 						</div>
 					)}

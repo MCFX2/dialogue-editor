@@ -1,13 +1,29 @@
 import React, { FC, useState } from "react";
 import { ResizableWindow } from "../Resize/ResizableWindow";
 import styles from "./NodeWindow.module.scss";
-import { SearchList } from "./SearchList";
 import { useMouseRelease } from "../MouseUtils/UseMouseClick";
 import { useMouseMove } from "../MouseUtils/UseMouseMove";
-import { ControlElement, DefaultControls, NodeControl } from "./NodeControl";
+import { ControlElement, NodeControl } from "./NodeControl";
 import { NodeHandle } from "../../App";
 import { SquareXIcon } from "../SVG/SquareXIcon";
 import { WindowPlusIcon } from "../SVG/WindowPlusIcon";
+import { AddControlButton } from "./AddControlButton";
+
+export const recursiveCalculateHeight = (
+	control: NodeControl[],
+	stopIndex: number
+): number => {
+	return control.reduce<number>((prev, cur) => {
+		if (cur.index > stopIndex) return prev;
+		if (cur.type === "array")
+			return (
+				prev +
+				cur.renderHeight +
+				recursiveCalculateHeight(cur.content, stopIndex)
+			);
+		return prev + cur.renderHeight;
+	}, 0);
+};
 
 export interface NodeWindowProps {
 	renderPosition: { x: number; y: number };
@@ -15,7 +31,7 @@ export interface NodeWindowProps {
 	title?: string;
 	controls?: NodeControl[];
 	addControl: (control: NodeControl) => void;
-	updateControl: (index: number, newControl: NodeControl) => void;
+	updateControl: (uuid: string, newControl: NodeControl) => void;
 	removeControl: (uuid: string) => void;
 	width: number;
 	setWidth: (newWidth: number) => void;
@@ -28,9 +44,6 @@ export interface NodeWindowProps {
 }
 
 export const NodeWindow: FC<NodeWindowProps> = (props) => {
-	const [showAddMenu, setShowAddMenu] = useState(false);
-	const [searchText, setSearchText] = useState("");
-
 	const [grabbingFrom, setGrabbingFrom] = useState<number | undefined>(
 		undefined
 	);
@@ -59,13 +72,8 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 		}
 	});
 
-	const combinedControlHeight =
-		props.controls
-			?.map((c) => c.renderHeight)
-			.reduce((prev, cur) => {
-				return prev + cur;
-			}, 0) ?? 0;
-
+	const combinedControlHeight = props.controls ? recursiveCalculateHeight(props.controls, 9999) : 0;
+	
 	return (
 		<ResizableWindow
 			allowOutOfBounds={true}
@@ -123,55 +131,24 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 					setLabel={(newLabel) => {
 						const newControl = { ...control };
 						newControl.label = newLabel;
-						props.updateControl(control.index, newControl);
+						props.updateControl(control.uuid, newControl);
 					}}
-					setValue={(newValue) => {
+					setValueAndHeight={(newValue, newHeight) => {
 						const newControl = { ...control };
 						newControl.content = newValue;
-						props.updateControl(control.index, newControl);
+						newControl.renderHeight = newHeight ?? control.renderHeight;
+						props.updateControl(control.uuid, newControl);
 					}}
-					pickUpControl={() => props.pickUpControl(control)}
+					pickUpControl={props.pickUpControl}
 					deleteControl={() => props.removeControl(control.uuid)}
 					setSelectedField={props.setSelectedField}
 				/>
 			))}
-			<div className={styles.addButtonField}>
-				{showAddMenu ? (
-					<>
-						<input
-							autoFocus={true}
-							className={styles.searchBar}
-							onBlur={() => {
-								setShowAddMenu(false);
-								setSearchText("");
-								// todo: it might be necessary to include the node uuid here
-								props.setSelectedField('', '#addControlSearchField')
-							}}
-							onChange={(e) => setSearchText(e.target.value)}
-							onFocus={() => {
-								props.setSelectedField('#addControlSearchField')
-							}}
-						/>
-						<SearchList
-							currentIdx={props.controls?.length ?? 0}
-							addControl={(c) => {
-								setShowAddMenu(false);
-								setSearchText("");
-								props.addControl(c);
-							}}
-							searchText={searchText}
-							controlCandidates={DefaultControls}
-						/>
-					</>
-				) : (
-					<button
-						className={styles.addButton}
-						onClick={() => setShowAddMenu(true)}
-					>
-						+ Add Field
-					</button>
-				)}
-			</div>
+			<AddControlButton
+				addControl={props.addControl}
+				setSelectedField={props.setSelectedField}
+				controls={props.controls}
+			/>
 		</ResizableWindow>
 	);
 };

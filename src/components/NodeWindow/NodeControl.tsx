@@ -19,11 +19,12 @@ import {
 	NumberNodeControl,
 } from "./Controls/NumberNodeControl";
 import { MinusIcon } from "../SVG/MinusIcon";
+import { ArrayControl, DefaultArrayControl } from "./Controls/ArrayControl";
 
 export interface NodeControl {
 	type:
 		| "number"
-		| "dropdown"
+		| "dropdown" // <- cut feature, doing it properly requires a lot of infrastructure we don't have
 		| "node"
 		| "string"
 		| "boolean"
@@ -55,6 +56,9 @@ interface ControlHolderProps {
 	text: string;
 	deleteControl: () => void;
 	setSelectedField: (selected: boolean) => void;
+	leftPad?: number;
+	windowWidth: number;
+	index?: number;
 	children: any;
 }
 
@@ -65,30 +69,47 @@ const ControlHolder: FC<ControlHolderProps> = ({
 	text,
 	deleteControl,
 	setSelectedField,
+	leftPad = 0,
+	index,
+	windowWidth,
 	children,
 }) => {
 	return (
-		<div className={styles.controlContainer}>
+		<div
+			className={styles.controlContainer}
+			style={{
+				marginLeft: leftPad,
+				width: `${windowWidth - leftPad}px`,
+			}}
+		>
 			<div className={styles.deleteControlButton} onClick={deleteControl}>
 				<MinusIcon size={32} />
 			</div>
-			<input
-				className={styles.controlLabelEditable}
-				autoFocus={true}
-				placeholder="(label)"
-				type="text"
-				value={text}
-				onChange={(e) => setText(e.target.value)}
-				style={{
+			{index !== undefined ? (
+				<div className={styles.controlIndex} style={{
 					width: `${100 + sliderOffset}px`,
-				}}
-				onFocus={() => {
-					setSelectedField(true);
-				}}
-				onBlur={() => {
-					setSelectedField(false);
-				}}
-			/>
+				}}>
+					{index}
+				</div>
+			) : (
+				<input
+					className={styles.controlLabelEditable}
+					autoFocus={true}
+					placeholder="(label)"
+					type="text"
+					value={text}
+					onChange={(e) => setText(e.target.value)}
+					style={{
+						width: `${100 + sliderOffset}px`,
+					}}
+					onFocus={() => {
+						setSelectedField(true);
+					}}
+					onBlur={() => {
+						setSelectedField(false);
+					}}
+				/>
+			)}
 			<p
 				className={styles.controlSeparator}
 				onMouseDown={(e) => onSliderGrab(e)}
@@ -103,21 +124,23 @@ const ControlHolder: FC<ControlHolderProps> = ({
 export interface ControlElementProps {
 	node: NodeControl;
 	setLabel: (label: string) => void;
-	setValue: (value: any) => void;
+	setValueAndHeight: (value: any, height?: number) => void;
 	sliderOffset: number;
 	onSliderGrab: (e: React.MouseEvent) => void;
 	windowWidth: number;
 	nodeTable: { [uuid: string]: NodeHandle };
-	pickUpControl: () => void;
+	pickUpControl: (node: NodeControl) => void;
 	deleteControl: () => void;
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
+	leftPad?: number;
+	index?: number;
 }
 
 // generates a JSX element for a primitive control
 export const ControlElement: FC<ControlElementProps> = ({
 	node,
 	setLabel,
-	setValue,
+	setValueAndHeight,
 	sliderOffset,
 	onSliderGrab,
 	windowWidth,
@@ -125,27 +148,46 @@ export const ControlElement: FC<ControlElementProps> = ({
 	pickUpControl,
 	deleteControl,
 	setSelectedField,
+	leftPad = 0,
+	index,
 }) => {
-	const controlWidth = windowWidth - 172 - sliderOffset;
+	const controlWidth = windowWidth - 172 - sliderOffset - leftPad;
 
-	return (
-		<ControlHolder
+	return node.type === "array" ? (
+		<ArrayControl
+			node={node}
+			setLabel={setLabel}
+			deleteControl={deleteControl}
+			setSelectedField={setSelectedField}
+			controlWidth={controlWidth}
+			nodeTable={nodeTable}
+			pickUpControl={pickUpControl}
+			setValue={setValueAndHeight}
+			windowWidth={windowWidth}
+			leftPad={leftPad}
+			index={index}
+		/>
+	) : (
+			<ControlHolder
+			index={index}
+			leftPad={leftPad}
 			onSliderGrab={onSliderGrab}
 			sliderOffset={sliderOffset}
 			setText={setLabel}
 			text={node.label}
 			deleteControl={deleteControl}
+			windowWidth={windowWidth}
 			setSelectedField={(selected) => {
 				setSelectedField(
-					selected ? (node.uuid + "#label") : "",
-					selected ? undefined : (node.uuid + "#label")
+					selected ? node.uuid + "#label" : "",
+					selected ? undefined : node.uuid + "#label"
 				);
 			}}
 		>
 			{node.type === "boolean" ? (
 				<BooleanNodeControl
 					controlWidth={controlWidth}
-					setValue={setValue}
+					setValue={setValueAndHeight}
 					value={node.content}
 				/>
 			) : node.type === "node" ? (
@@ -153,12 +195,12 @@ export const ControlElement: FC<ControlElementProps> = ({
 					nodeTable={nodeTable}
 					width={controlWidth}
 					value={node.content}
-					pickUpControl={pickUpControl}
+					pickUpControl={() => pickUpControl(node)}
 				/>
 			) : node.type === "string" ? (
 				<TextNodeControl
 					value={node.content}
-					setValue={setValue}
+					setValue={setValueAndHeight}
 					controlWidth={controlWidth}
 					setSelectedField={(selected) => {
 						setSelectedField(
@@ -170,7 +212,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 			) : node.type === "number" ? (
 				<NumberNodeControl
 					value={node.content}
-					setValue={setValue}
+					setValue={setValueAndHeight}
 					controlWidth={controlWidth}
 					restriction={node.restrictionIdentifier}
 					setSelectedField={(selected) => {
@@ -193,4 +235,5 @@ export const DefaultControls: NodeControl[] = [
 	DefaultTextControl,
 	DefaultBooleanControl,
 	DefaultDraggableNodeControl,
+	DefaultArrayControl,
 ];

@@ -114,6 +114,7 @@ function App() {
 		if (e.button === 0) {
 			grabbing && setGrabbing(false);
 			if (draggingControl !== undefined) {
+				console.log(draggingControl.uuid);
 				if (
 					targetNode !== undefined &&
 					targetNode.uuid !== draggingControl.parent
@@ -121,9 +122,11 @@ function App() {
 					// configure the control
 					draggingControl.content = targetNode.uuid;
 					updateScreen([...screen]);
+					!unsaved && setUnsaved(true);
 				} else {
 					draggingControl.content = undefined;
 					updateScreen([...screen]);
+					!unsaved && setUnsaved(true);
 				}
 				setDraggingControl(undefined);
 			}
@@ -319,6 +322,52 @@ function App() {
 		{}
 	);
 
+	const getArrayNodeControls: (node: NodeControl) => NodeControl[] = (node: NodeControl) => {
+		if (node.type === 'node') return [node];
+
+		if (node.type !== 'array') return [];
+
+		return (node.content as NodeControl[]).reduce<NodeControl[]>((prev, cur) => {
+				return [...prev, ...getArrayNodeControls(cur)];
+		}, []);
+	}
+
+	const getAllDraggableNodeControls = (node: NodeHandle) => {
+		return node.controls.reduce<NodeControl[]>((prev, cur) => {
+			if (cur.type === 'array') {
+				return [...prev, ...getArrayNodeControls(cur)];
+			}
+			else if (cur.type === 'node') {
+				return [...prev, cur];
+			}
+			else {
+				return prev;
+			}
+		}, []);
+	}
+
+	const recursiveCalculateIndices = (node: NodeControl, startIdx: number) => {
+		if (node.type === 'array') {
+			for (const control of node.content as NodeControl[]) {
+				control.index = startIdx++;
+				if (control.type === 'array') {
+					startIdx = recursiveCalculateIndices(control, startIdx);
+				}
+			}
+		}
+		return startIdx;
+	}
+
+	const recalculateIndices = (node: NodeHandle) => {
+		let idx = 0;
+		for (const control of node.controls) {
+			control.index = idx++;
+			if (control.type === 'array') {
+				idx = recursiveCalculateIndices(control, idx);
+			}
+		}
+	}
+
 	return (
 		<>
 			<div className={styles.appBgContainer}>
@@ -351,7 +400,7 @@ function App() {
 					cameraPosition={cameraPosition}
 					nodes={nodeTable}
 					nodeConnections={screen.reduce<NodeControl[]>((prev, cur) => {
-						return [...prev, ...cur.controls.filter((c) => c.type === "node")];
+						return [...prev, ...getAllDraggableNodeControls(cur)];
 					}, [])}
 					mousePos={mousePos}
 					newTargetFrom={draggingControl}
@@ -370,22 +419,21 @@ function App() {
 								const newControl = { ...control };
 								newControl.uuid = uuid.v4();
 								newControl.parent = node.uuid;
-								newControl.index = node.controls.length;
 								node.controls.push(newControl);
+								recalculateIndices(node);
 								!unsaved && setUnsaved(true);
 								updateScreen([...screen]);
 							}}
-							updateControl={(index, newControl) => {
-								node.controls[index] = newControl;
+							updateControl={(uuid, newControl) => {
+								node.controls[node.controls.findIndex(e => e.uuid === uuid)] = newControl;
+								recalculateIndices(node);
 								!unsaved && setUnsaved(true);
 								updateScreen([...screen]);
 							}}
 							removeControl={(uuid) => {
 								node.controls = node.controls.filter((c) => c.uuid !== uuid);
 								// recalculate indices
-								node.controls.forEach((c, i) => {
-									c.index = i;
-								});
+								recalculateIndices(node);
 								!unsaved && setUnsaved(true);
 								updateScreen([...screen]);
 							}}

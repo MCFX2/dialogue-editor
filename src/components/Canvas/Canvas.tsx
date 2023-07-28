@@ -1,6 +1,7 @@
 import { FC, useEffect, useRef } from "react";
 import { NodeControl } from "../NodeWindow/NodeControl";
 import { NodeHandle } from "../../App";
+import { recursiveCalculateHeight } from "../NodeWindow/NodeWindow";
 
 // all of this so i can draw a fucking line
 // i love web
@@ -72,14 +73,8 @@ export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
 				if (control.type === "node" && control.content) {
 					const parent = props.nodes[control.parent];
 
-					const calculatedHeight = parent.controls.reduce<number>(
-						(prev, cur) => {
-							return cur.index <= control.index
-								? prev + cur.renderHeight
-								: prev;
-						},
-						20
-					);
+					const calculatedHeight =
+						20 + recursiveCalculateHeight(parent.controls, control.index);
 
 					const rawStart = parent.worldPosition;
 					const start = {
@@ -101,12 +96,9 @@ export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
 			if (props.newTargetFrom !== undefined) {
 				const parent = props.nodes[props.newTargetFrom.parent];
 
-				const calculatedHeight = parent.controls.reduce<number>(
-					(prev, cur) => {
-						return cur.index <= props.newTargetFrom!.index
-							? prev + cur.renderHeight
-							: prev;
-					}, 20
+				const calculatedHeight = 20 + recursiveCalculateHeight(
+					parent.controls,
+					props.newTargetFrom.index
 				);
 
 				const rawStart = parent.worldPosition;

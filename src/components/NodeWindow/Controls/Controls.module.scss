@@ -112,3 +112,21 @@
 	@extend .generalControl;
 	margin-right: 16px;
 }
+
+.arrayTitle
+{
+	@extend .generalControl;
+	margin-right: 16px;
+	margin-left: 16px;
+}
+
+.arrayContainer
+{
+	display: flex;
+	flex-direction: column;
+}
+
+.arrayIndex
+{
+	@extend .controlIndex;
+}

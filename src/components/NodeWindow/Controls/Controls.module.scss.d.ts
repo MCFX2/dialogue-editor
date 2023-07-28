@@ -1,6 +1,10 @@
+export declare const arrayContainer: string;
+export declare const arrayIndex: string;
+export declare const arrayTitle: string;
 export declare const boolCheckbox: string;
 export declare const boolCheckboxContainer: string;
 export declare const controlContainer: string;
+export declare const controlIndex: string;
 export declare const controlLabelEditable: string;
 export declare const controlSeparator: string;
 export declare const deleteControlButton: string;

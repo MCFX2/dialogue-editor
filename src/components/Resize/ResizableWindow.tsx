@@ -205,7 +205,6 @@ export const ResizableWindow = ({
 		});
 
 		if (sizeChanged) {
-			console.log(finalSize.x);
 			onSizeChange(finalSize);
 		}
 

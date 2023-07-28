@@ -71,6 +71,26 @@
 	font-family: 'Monocraft';
 }
 
+.controlIndex
+{
+	padding: 0;
+	user-select: none;
+	color: #eee;
+	height: 100%;
+
+	display: flex;
+
+	align-items: center;
+	justify-content: flex-end;
+
+	margin-left: 16px;
+
+	text-align: right;
+	text-overflow: ellipsis;
+
+	font-family: 'Monocraft';
+}
+
 .controlSeparator
 {
 	font-family: 'Monocraft';
