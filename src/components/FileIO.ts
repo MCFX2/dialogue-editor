@@ -127,7 +127,8 @@ export async function initWorkspace(
 export async function saveScreen(
 	IOState: Readonly<FilesystemState>,
 	screen: NodeHandle[],
-	defaultFilename: string
+	defaultFilename: string,
+	newFile?: boolean,
 ) {
 	let newState = { ...IOState };
 	let neededInit = false;
@@ -148,7 +149,21 @@ export async function saveScreen(
 				create: true,
 			});
 		
+		newState = await generateFileList(newState);
+		
 		neededInit = true;
+	} else if (newFile) {
+		const newHandle = await newState.screenDirectoryHandle?.getFileHandle(defaultFilename, {
+			create: true,
+		});
+
+		newState = await generateFileList(newState);
+
+		const writer = await newHandle?.createWritable();
+		await writer?.write(JSON.stringify(screen));
+		await writer?.close();
+
+		return newState;
 	}
 
 	const writer = await newState.currentScreenFile!.createWritable();

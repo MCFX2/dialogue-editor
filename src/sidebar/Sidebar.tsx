@@ -140,6 +140,7 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 												onClick={() => props.loadScreen(file)}
 											>
 												<input
+													contentEditable={collapsed ? false : true}
 													onClick={(e) => e.stopPropagation()}
 													onFocus={(e) => {
 														props.setSelectedField(idx + "#screenNameField");
@@ -186,13 +187,13 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 													editedFilename !== undefined &&
 													editedFilename !== ""
 												) {
-													props.createScreen(editedFilename);
+													props.createScreen(editedFilename + ".json");
 												}
 												props.setSelectedField("", "#newScreenField");
 												setEditedFilename(undefined);
 												setFilenameSelected(-2);
 											}}
-											value={editedFilename ?? ""}
+											value={filenameSelected === -1 ? editedFilename : '' ?? ""}
 											onChange={(e) => {
 												setEditedFilename(e.target.value);
 											}}
@@ -241,12 +242,12 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 					</div>
 					{collapsed ? (
 						<div className={styles.legalText}>
-							v0.3rc1
+							v0.3
 							<p>EVALUATION</p>
 						</div>
 					) : (
 						<div className={styles.legalText}>
-							v0.3-rc1 (c) 2023 Rozalily
+							v0.3 (c) 2023 Rozalily
 							<p>For evaluation purposes only.</p>
 						</div>
 					)}

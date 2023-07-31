@@ -150,25 +150,12 @@ function App() {
 		]);
 	};
 
-	const createScreen = (filename: string) => {
-		if (IOState.screenDirectoryHandle) {
-			// ensure we're not using a name that already exists
-			if (IOState.screenFileList?.find((f) => f.name === filename)) {
-				return;
-			}
-
-			IOState.screenDirectoryHandle
-				.getFileHandle(filename, { create: true })
-				.then((h) => {
-					if (IOState.screenFileList) {
-						setIOState((old) => {
-							old.screenFileList!.push(h);
-							old.screenFileList!.sort((a, b) => a.name.localeCompare(b.name));
-							return old;
-						});
-					}
-				});
+	const createScreen = async (filename: string) => {
+		if (IOState.screenFileList?.find((f) => f.name === filename)) {
+			return;
 		}
+
+		setIOState(await saveScreen(IOState, [], filename, true));
 	};
 
 	const loadScreen = (filename: string) => {
