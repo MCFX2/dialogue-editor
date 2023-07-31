@@ -35,6 +35,8 @@
 	border:none;
 	background-color: #00000000;
 
+	text-overflow: ellipsis;
+
 	user-select: none;
 
 	padding: 0;
@@ -62,13 +64,8 @@
 {
 	@extend .generalControl;
 
-
-	text-overflow: ellipsis;
-
 	margin-left: 16px;
 	text-align: right;
-
-	font-family: 'Monocraft';
 }
 
 .controlIndex

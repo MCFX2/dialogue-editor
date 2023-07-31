@@ -7,6 +7,12 @@ import { NodeWindow } from "./components/NodeWindow/NodeWindow";
 import { NodeControl } from "./components/NodeWindow/NodeControl";
 import * as uuid from "uuid";
 import { Canvas } from "./components/Canvas/Canvas";
+import {
+	FilesystemState,
+	initWorkspace,
+	renameScreen,
+	saveScreen,
+} from "./components/FileIO";
 
 export interface NodeHandle {
 	name: string;
@@ -32,29 +38,17 @@ function App() {
 	);
 
 	const worldSize = { width: 2160, height: 1528 };
+
+	// this state is the single biggest performance bottleneck in the entire app
 	const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-	const [workspaceHandle, setWorkspaceHandle] = useState<
-		FileSystemDirectoryHandle | undefined
-	>(undefined);
-
-	const [screenDirectoryHandle, setScreenDirectoryHandle] = useState<
-		FileSystemDirectoryHandle | undefined
-	>(undefined);
-
-	const [screenHandle, setScreenHandle] = useState<
-		FileSystemFileHandle | undefined
-	>(undefined);
-
-	const [screenFileList, setScreenFileList] = useState<
-		FileSystemHandle[] | undefined
-	>(undefined);
+	const [IOState, setIOState] = useState<FilesystemState>({});
 
 	const [unsaved, setUnsaved] = useState(false);
 
 	// keep track of whether the user is typing in a text field
 	// so we can disable keyboard shortcuts
-	const [selectedField, setSelectedField] = useState('');
+	const [selectedField, setSelectedField] = useState("");
 
 	const clampBgPosition = (x: number, y: number) => {
 		const { width, height } = worldSize;
@@ -114,7 +108,6 @@ function App() {
 		if (e.button === 0) {
 			grabbing && setGrabbing(false);
 			if (draggingControl !== undefined) {
-				console.log(draggingControl.uuid);
 				if (
 					targetNode !== undefined &&
 					targetNode.uuid !== draggingControl.parent
@@ -157,86 +150,40 @@ function App() {
 		]);
 	};
 
-	const saveScreen = (handle?: FileSystemFileHandle) => {
-		const usedHandle = handle ?? screenHandle;
-		if (usedHandle) {
-			usedHandle.createWritable().then((writer) => {
-				writer.write(JSON.stringify(screen));
-				writer.close();
-			});
-		}
-	};
+	const createScreen = (filename: string) => {
+		if (IOState.screenDirectoryHandle) {
+			// ensure we're not using a name that already exists
+			if (IOState.screenFileList?.find((f) => f.name === filename)) {
+				return;
+			}
 
-	const initializeWorkspaceDirectory = async () => {
-		try {
-			const handle = await showDirectoryPicker();
-			setWorkspaceHandle(handle);
-			setScreenDirectoryHandle(undefined);
-			setScreenHandle(undefined);
-			setScreenFileList(undefined);
-			return handle;
-		} catch (e) {
-			console.log(e);
-			return undefined;
-		}
-	};
-
-	const initializeScreenDirectory = async (
-		handle?: FileSystemDirectoryHandle
-	) => {
-		const usedHandle = handle ?? workspaceHandle;
-		if (usedHandle) {
-			try {
-				const handle = await usedHandle.getDirectoryHandle("screens", {
-					create: true,
-				});
-				setScreenDirectoryHandle(handle);
-				// also initialize file listing
-
-				const files = [];
-				for await (const entry of handle.values()) {
-					if (entry.kind === "file") {
-						files.push(entry);
+			IOState.screenDirectoryHandle
+				.getFileHandle(filename, { create: true })
+				.then((h) => {
+					if (IOState.screenFileList) {
+						setIOState((old) => {
+							old.screenFileList!.push(h);
+							old.screenFileList!.sort((a, b) => a.name.localeCompare(b.name));
+							return old;
+						});
 					}
-				}
-
-				setScreenFileList(files);
-
-				return handle;
-			} catch (e) {
-				console.log(e);
-				return undefined;
-			}
-		}
-	};
-
-	const initializeScreenFile = async (handle?: FileSystemDirectoryHandle) => {
-		const usedHandle = handle ?? screenDirectoryHandle;
-		if (usedHandle) {
-			try {
-				// todo: show a modal to prompt for filename
-				const handle = await usedHandle.getFileHandle("1.json", {
-					create: true,
 				});
-
-				setScreenHandle(handle);
-				return handle;
-			} catch (e) {
-				console.log(e);
-				return undefined;
-			}
 		}
 	};
 
 	const loadScreen = (filename: string) => {
-		if (screenDirectoryHandle) {
-			screenDirectoryHandle
+		if (IOState.screenDirectoryHandle) {
+			IOState.screenDirectoryHandle
 				.getFileHandle(filename)
 				.then((fileHandle) => {
 					fileHandle.getFile().then((file) => {
 						file.text().then((text) => {
 							updateScreen(JSON.parse(text));
-							setScreenHandle(fileHandle);
+							setIOState((old) => {
+								old.currentScreenFile = fileHandle;
+								return old;
+							});
+							setCameraPosition({ x: 0, y: 0 });
 							unsaved && setUnsaved(false);
 						});
 					});
@@ -247,38 +194,9 @@ function App() {
 		}
 	};
 
-	const saveAction = () => {
-		// go down the chain of "do we have a handle for this file?"
-		// workspace first
-		if (!workspaceHandle) {
-			initializeWorkspaceDirectory().then((h) => {
-				initializeScreenDirectory(h).then((h) => {
-					initializeScreenFile(h).then((h) => {
-						saveScreen(h);
-					});
-				});
-			});
-		} else if (!screenDirectoryHandle) {
-			initializeScreenDirectory().then((h) => {
-				initializeScreenFile(h).then((h) => {
-					saveScreen(h);
-				});
-			});
-		} else if (!screenHandle) {
-			initializeScreenFile().then((h) => {
-				saveScreen(h);
-			});
-		} else {
-			saveScreen();
-		}
-
+	const saveAction = async () => {
+		setIOState(await saveScreen(IOState, screen, "untitled.json"));
 		unsaved && setUnsaved(false);
-	};
-
-	const loadFolder = () => {
-		initializeWorkspaceDirectory().then((h) => {
-			initializeScreenDirectory(h);
-		});
 	};
 
 	const bgPos = clampBgPosition(cameraPosition.x, cameraPosition.y);
@@ -286,7 +204,9 @@ function App() {
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			// keyboard shortcuts
-			if (selectedField !== '') return;
+			if (selectedField !== "") {
+				return;
+			}
 
 			// make node
 			if (e.shiftKey && e.key.toLowerCase() === "e") {
@@ -303,8 +223,8 @@ function App() {
 			if (e.ctrlKey && e.key.toLowerCase() === "o") {
 				e.preventDefault(); // suppress browser open dialog
 				// load workspace
-				initializeWorkspaceDirectory().then((h) => {
-					initializeScreenDirectory(h);
+				initWorkspace(IOState).then((newState) => {
+					setIOState(newState);
 				});
 			}
 		};
@@ -322,51 +242,58 @@ function App() {
 		{}
 	);
 
-	const getArrayNodeControls: (node: NodeControl) => NodeControl[] = (node: NodeControl) => {
-		if (node.type === 'node') return [node];
+	const getArrayNodeControls: (node: NodeControl) => NodeControl[] = (
+		node: NodeControl
+	) => {
+		if (node.type === "node") return [node];
 
-		if (node.type !== 'array') return [];
+		if (node.type !== "array") return [];
 
-		return (node.content as NodeControl[]).reduce<NodeControl[]>((prev, cur) => {
+		return (node.content as NodeControl[]).reduce<NodeControl[]>(
+			(prev, cur) => {
 				return [...prev, ...getArrayNodeControls(cur)];
-		}, []);
-	}
+			},
+			[]
+		);
+	};
 
 	const getAllDraggableNodeControls = (node: NodeHandle) => {
 		return node.controls.reduce<NodeControl[]>((prev, cur) => {
-			if (cur.type === 'array') {
+			if (cur.type === "array") {
 				return [...prev, ...getArrayNodeControls(cur)];
-			}
-			else if (cur.type === 'node') {
+			} else if (cur.type === "node") {
 				return [...prev, cur];
-			}
-			else {
+			} else {
 				return prev;
 			}
 		}, []);
-	}
+	};
 
 	const recursiveCalculateIndices = (node: NodeControl, startIdx: number) => {
-		if (node.type === 'array') {
+		if (node.type === "array") {
 			for (const control of node.content as NodeControl[]) {
 				control.index = startIdx++;
-				if (control.type === 'array') {
+				if (control.type === "array") {
 					startIdx = recursiveCalculateIndices(control, startIdx);
 				}
 			}
 		}
 		return startIdx;
-	}
+	};
 
 	const recalculateIndices = (node: NodeHandle) => {
 		let idx = 0;
 		for (const control of node.controls) {
 			control.index = idx++;
-			if (control.type === 'array') {
+			if (control.type === "array") {
 				idx = recursiveCalculateIndices(control, idx);
 			}
 		}
-	}
+	};
+
+	const allNodeConnections = screen.reduce<NodeControl[]>((prev, cur) => {
+		return [...prev, ...getAllDraggableNodeControls(cur)];
+	}, []);
 
 	return (
 		<>
@@ -382,26 +309,38 @@ function App() {
 
 			<div className={styles.wholeAppContainer}>
 				<AppSidebar
+					createScreen={createScreen}
 					createNewNode={makeNode}
-					loadWorkspace={() => {
-						loadFolder();
+					loadWorkspace={async () => {
+						setIOState(await initWorkspace(IOState));
 					}}
 					saveWorkspace={() => {
 						saveAction();
 					}}
-					screenFiles={screenFileList?.map((f) => f.name) ?? []}
-					currentScreen={screenHandle?.name ?? "Untitled"}
+					screenFiles={IOState.screenFileList?.map((f) => f.name) ?? []}
+					currentScreen={IOState.currentScreenFile?.name ?? "Untitled"}
 					unsaved={unsaved}
 					loadScreen={(filename) => {
 						loadScreen(filename);
+					}}
+					setSelectedField={(uuid, oldUuid) => {
+						if (oldUuid !== undefined) {
+							// we're done typing
+							if (selectedField === oldUuid) {
+								setSelectedField("");
+							}
+						} else {
+							setSelectedField(uuid);
+						}
+					}}
+					renameScreen={async (oldName, newName) => {
+						setIOState(await renameScreen(IOState, oldName, newName));
 					}}
 				/>
 				<Canvas
 					cameraPosition={cameraPosition}
 					nodes={nodeTable}
-					nodeConnections={screen.reduce<NodeControl[]>((prev, cur) => {
-						return [...prev, ...getAllDraggableNodeControls(cur)];
-					}, [])}
+					nodeConnections={allNodeConnections}
 					mousePos={mousePos}
 					newTargetFrom={draggingControl}
 				/>
@@ -425,7 +364,8 @@ function App() {
 								updateScreen([...screen]);
 							}}
 							updateControl={(uuid, newControl) => {
-								node.controls[node.controls.findIndex(e => e.uuid === uuid)] = newControl;
+								node.controls[node.controls.findIndex((e) => e.uuid === uuid)] =
+									newControl;
 								recalculateIndices(node);
 								!unsaved && setUnsaved(true);
 								updateScreen([...screen]);
@@ -456,6 +396,12 @@ function App() {
 								updateScreen([...screen]);
 							}}
 							deleteNode={() => {
+								// break all connections to this node
+								for (const field of allNodeConnections) {
+									if (field.content === node.uuid) {
+										field.content = undefined;
+									}
+								}
 								!unsaved && setUnsaved(true);
 								updateScreen([...screen.filter((n) => n.uuid !== node.uuid)]);
 							}}
@@ -477,10 +423,9 @@ function App() {
 								if (oldUuid !== undefined) {
 									// we're done typing
 									if (selectedField === oldUuid) {
-										setSelectedField('');
+										setSelectedField("");
 									}
-								}
-								else {
+								} else {
 									setSelectedField(uuid);
 								}
 							}}

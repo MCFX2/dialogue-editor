@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import {
 	Menu,
 	MenuItem,
@@ -23,6 +23,11 @@ export interface SidebarProps {
 	screenFiles: string[];
 	currentScreen: string;
 	loadScreen: (filename: string) => void;
+	createScreen: (filename: string) => void;
+
+	setSelectedField: (uuid: string, oldUuid?: string) => void;
+
+	renameScreen: (oldName: string, newName: string) => void;
 }
 
 interface SidebarHeadingProps {
@@ -55,7 +60,12 @@ const SidebarHeading: FC<SidebarHeadingProps> = ({
 };
 
 export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
-	const [collapsed, setCollapsed] = React.useState(false);
+	const [collapsed, setCollapsed] = useState(false);
+	const [filenameSelected, setFilenameSelected] = useState(-2);
+
+	const [editedFilename, setEditedFilename] = useState<string | undefined>(
+		undefined
+	);
 
 	return (
 		<div style={{ display: "flex", height: "100%" }}>
@@ -76,7 +86,15 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 					</div>
 					<div className={styles.sidebarMainSection}>
 						<SidebarHeading first collapsed={collapsed} text="File" />
-						<Menu>
+						<Menu
+							menuItemStyles={{
+								button: {
+									":hover": {
+										backgroundColor: "#00254b",
+									},
+								},
+							}}
+						>
 							<MenuItem
 								icon={<SaveIcon size={24} />}
 								onClick={props.saveWorkspace}
@@ -97,18 +115,90 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 									label="Screens"
 									className={`${styles.submenuBox} ${styles.mainMenuButton}`}
 								>
-									{props.screenFiles.map((file) => (
-										<MenuItem
-											className={styles.submenuEntry}
-											key={file}
-											onClick={() => props.loadScreen(file)}
-										>
-											{(file === props.currentScreen
-												? "> " + file + (props.unsaved ? "*" : "")
-												: file
-											).replace(".json", "")}
-										</MenuItem>
-									))}
+									{props.screenFiles.map((file, idx) => {
+										let fileDisplay = file ?? "";
+
+										if (
+											filenameSelected === idx &&
+											editedFilename !== undefined
+										) {
+											fileDisplay = editedFilename;
+										} else {
+											fileDisplay = file.replace(/\.(json)$/, "");
+											if (filenameSelected !== idx) {
+												if (file === props.currentScreen) {
+													fileDisplay = "> " + fileDisplay;
+													if (props.unsaved) fileDisplay += "*";
+												}
+											}
+										}
+
+										return (
+											<MenuItem
+												className={styles.submenuEntry}
+												key={file}
+												onClick={() => props.loadScreen(file)}
+											>
+												<input
+													onClick={(e) => e.stopPropagation()}
+													onFocus={(e) => {
+														props.setSelectedField(idx + "#screenNameField");
+														setFilenameSelected(idx);
+													}}
+													onBlur={(e) => {
+														props.setSelectedField(
+															"",
+															idx + "#screenNameField"
+														);
+														setFilenameSelected(-2);
+
+														if (
+															editedFilename !== undefined &&
+															editedFilename !== ""
+														) {
+															props.renameScreen(
+																file,
+																editedFilename + ".json"
+															);
+														}
+
+														setEditedFilename(undefined);
+													}}
+													className={styles.filenameField}
+													value={fileDisplay}
+													onChange={(e) => {
+														setEditedFilename(e.target.value);
+													}}
+												/>
+											</MenuItem>
+										);
+									})}
+									<MenuItem className={styles.submenuEntry}>
+										<input
+											className={styles.filenameField}
+											autoFocus={true}
+											onFocus={(e) => {
+												props.setSelectedField("#newScreenField");
+												setFilenameSelected(-1);
+											}}
+											onBlur={(e) => {
+												if (
+													editedFilename !== undefined &&
+													editedFilename !== ""
+												) {
+													props.createScreen(editedFilename);
+												}
+												props.setSelectedField("", "#newScreenField");
+												setEditedFilename(undefined);
+												setFilenameSelected(-2);
+											}}
+											value={editedFilename ?? ""}
+											onChange={(e) => {
+												setEditedFilename(e.target.value);
+											}}
+											placeholder="+ New Screen"
+										/>
+									</MenuItem>
 								</SubMenu>
 							)}
 						</Menu>
@@ -151,12 +241,12 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 					</div>
 					{collapsed ? (
 						<div className={styles.legalText}>
-							v0.3b
+							v0.3rc1
 							<p>EVALUATION</p>
 						</div>
 					) : (
 						<div className={styles.legalText}>
-							v0.3-beta (c) 2023 Rozalily
+							v0.3-rc1 (c) 2023 Rozalily
 							<p>For evaluation purposes only.</p>
 						</div>
 					)}

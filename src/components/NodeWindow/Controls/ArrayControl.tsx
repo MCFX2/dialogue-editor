@@ -69,6 +69,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 						value={node.label ?? ""}
 						onChange={(e) => setLabel(e.target.value)}
 						type={"text"}
+						autoFocus={true}
 						style={{
 							width: `${windowWidth - 300 - leftPad / 2 - 48}px`,
 						}}
@@ -100,7 +101,9 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 						children.push(newControl); // this is immediately overwritten by the setValue call, but it's necessary for the height calculation
 						setValue(children);
 					}}
-					setSelectedField={setSelectedField}
+					setSelectedField={(uuid, oldUuid) => {
+						setSelectedField(uuid, oldUuid);
+					}}
 					controls={children}
 					style={{
 						width: `${

@@ -1,3 +1,4 @@
+@import './../components/NodeWindow/NodeControl.module.scss';
 
 .sidebar {
 	background-color: #0b0928c0;
@@ -201,8 +202,13 @@
 .mainMenuButton {
 	color: #fff;
 	text-shadow: 1px 1px 1px #000;
+}
 
-	&:hover{
-		color: #000;
-	}
+.filenameField {
+	@extend .generalControl;
+
+	height: 32px;
+	width: 120px;
+
+	text-shadow: 1px 1px 1px #000;
 }

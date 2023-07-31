@@ -1,7 +1,14 @@
 export declare const badge: string;
 export declare const bodyText: string;
+export declare const controlContainer: string;
+export declare const controlIndex: string;
+export declare const controlLabelEditable: string;
+export declare const controlSeparator: string;
 export declare const defaultText: string;
+export declare const deleteControlButton: string;
 export declare const disableColor: string;
+export declare const filenameField: string;
+export declare const generalControl: string;
 export declare const headerLogo: string;
 export declare const icon: string;
 export declare const legalText: string;

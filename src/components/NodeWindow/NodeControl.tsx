@@ -87,7 +87,7 @@ const ControlHolder: FC<ControlHolderProps> = ({
 			</div>
 			{index !== undefined ? (
 				<div className={styles.controlIndex} style={{
-					width: `${100 + sliderOffset}px`,
+					width: `${16 + sliderOffset}px`,
 				}}>
 					{index}
 				</div>
@@ -151,7 +151,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 	leftPad = 0,
 	index,
 }) => {
-	const controlWidth = windowWidth - 172 - sliderOffset - leftPad;
+	const controlWidth = windowWidth - 172 - sliderOffset - leftPad + (index !== undefined ? 84 : 0);
 
 	return node.type === "array" ? (
 		<ArrayControl
