@@ -94,7 +94,7 @@ const ControlHolder: FC<ControlHolderProps> = ({
 			) : (
 				<input
 					className={styles.controlLabelEditable}
-					autoFocus={true}
+					autoFocus={false}
 					placeholder="(label)"
 					type="text"
 					value={text}

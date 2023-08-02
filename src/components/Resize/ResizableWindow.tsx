@@ -227,15 +227,18 @@ export const ResizableWindow = ({
 		};
 	};
 
+	const usedWidth =
+		forcedWidth === undefined
+			? (windowLayout.isCollapsed
+					? windowLayout.collapsedSize
+					: windowLayout.size
+			  ).x
+			: forcedWidth;
+
+	const usedXPos = forcedPositionX ?? windowLayout.position.x;
+
 	let windowLayoutCss = {
-		width: `${
-			forcedWidth === undefined
-				? (windowLayout.isCollapsed
-						? windowLayout.collapsedSize
-						: windowLayout.size
-				  ).x
-				: forcedWidth
-		}px`,
+		width: `${usedWidth}px`,
 		height: `${
 			forcedHeight === undefined
 				? (windowLayout.isCollapsed
@@ -244,7 +247,8 @@ export const ResizableWindow = ({
 				  ).y
 				: forcedHeight
 		}px`,
-		left: `${forcedPositionX ?? windowLayout.position.x}px`,
+		left: `${usedXPos}px`,
+		right: `${viewportSize.x - (usedXPos + usedWidth)}px`,
 		top: `${forcedPositionY ?? windowLayout.position.y}px`,
 	};
 

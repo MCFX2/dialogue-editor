@@ -69,7 +69,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 						value={node.label ?? ""}
 						onChange={(e) => setLabel(e.target.value)}
 						type={"text"}
-						autoFocus={true}
+						autoFocus={false}
 						style={{
 							width: `${windowWidth - 300 - leftPad / 2 - 48}px`,
 						}}

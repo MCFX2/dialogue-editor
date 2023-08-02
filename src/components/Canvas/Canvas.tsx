@@ -1,7 +1,8 @@
-import { FC, useEffect, useRef } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import { NodeControl } from "../NodeWindow/NodeControl";
 import { NodeHandle } from "../../App";
 import { recursiveCalculateHeight } from "../NodeWindow/NodeWindow";
+import { useMouseMove } from "../MouseUtils/UseMouseMove";
 
 // all of this so i can draw a fucking line
 // i love web
@@ -12,12 +13,26 @@ export interface CanvasProps {
 	nodeConnections: NodeControl[];
 	nodes: { [uuid: string]: NodeHandle };
 
-	mousePos: { x: number; y: number };
 	newTargetFrom?: NodeControl;
 }
 
-export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
+export const Canvas: FC<CanvasProps> = ({
+	cameraPosition,
+	nodeConnections,
+	nodes,
+	newTargetFrom,
+}) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+
+	const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+	useMouseMove((ev) => {
+		// avoid updating and triggering a re-render unless
+		// we're actually clicking and dragging
+		if (newTargetFrom !== undefined) {
+			setMousePos({ x: ev.clientX, y: ev.clientY });
+		}
+	});
 
 	useEffect(() => {
 		const drawBezier = (
@@ -69,45 +84,47 @@ export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
 			ctx.lineWidth = 4;
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-			for (const control of props.nodeConnections) {
+			for (const control of nodeConnections) {
 				if (control.type === "node" && control.content) {
-					const parent = props.nodes[control.parent];
+					const parent = nodes[control.parent];
 
 					const calculatedHeight =
 						20 + recursiveCalculateHeight(parent.controls, control.index);
 
 					const rawStart = parent.worldPosition;
 					const start = {
-						x: rawStart.x + parent.width + props.cameraPosition.x,
-						y: rawStart.y + calculatedHeight + props.cameraPosition.y,
+						x: rawStart.x + parent.width + cameraPosition.x,
+						y: rawStart.y + calculatedHeight + cameraPosition.y,
 					};
 
-					const rawEnd = props.nodes[control.content].worldPosition;
+					const rawEnd = nodes[control.content].worldPosition;
 
 					const end = {
-						x: rawEnd.x + props.cameraPosition.x,
-						y: rawEnd.y + props.cameraPosition.y + 16,
+						x: rawEnd.x + cameraPosition.x,
+						y: rawEnd.y + cameraPosition.y + 16,
 					};
 
 					drawBezier(start, end, ctx);
 				}
 			}
 
-			if (props.newTargetFrom !== undefined) {
-				const parent = props.nodes[props.newTargetFrom.parent];
+			// it would save us a lot of performance if we could break this out
+			// into a separate render call, however we need to be able to clear it
+			// and redraw it every frame. so doing that would actually require
+			// an entire second canvas, which is just more work than i feel like doing.
+			if (newTargetFrom !== undefined) {
+				const parent = nodes[newTargetFrom.parent];
 
-				const calculatedHeight = 20 + recursiveCalculateHeight(
-					parent.controls,
-					props.newTargetFrom.index
-				);
+				const calculatedHeight =
+					20 + recursiveCalculateHeight(parent.controls, newTargetFrom.index);
 
 				const rawStart = parent.worldPosition;
 				const start = {
-					x: rawStart.x + parent.width + props.cameraPosition.x,
-					y: rawStart.y + calculatedHeight + props.cameraPosition.y,
+					x: rawStart.x + parent.width + cameraPosition.x,
+					y: rawStart.y + calculatedHeight + cameraPosition.y,
 				};
 
-				drawBezier(start, props.mousePos, ctx);
+				drawBezier(start, mousePos, ctx);
 			}
 		};
 
@@ -122,7 +139,7 @@ export const Canvas: FC<CanvasProps> = (props: CanvasProps) => {
 		} else {
 			console.error("Failed to get canvas");
 		}
-	}, [props]);
+	}, [mousePos, cameraPosition, nodeConnections, nodes, newTargetFrom]);
 
 	return (
 		<canvas

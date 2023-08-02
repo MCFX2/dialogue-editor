@@ -19,7 +19,7 @@
 .resizeWindow {
 	display: flex;
 	flex-direction: column;
-	position: fixed;
+	position: absolute;
 }
 
 .resizeWindowCenter {

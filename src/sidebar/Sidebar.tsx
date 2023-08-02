@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import {
 	Menu,
 	MenuItem,
@@ -12,9 +12,10 @@ import { PlusIcon2 } from "../components/SVG/PlusIcon";
 import { SaveIcon } from "../components/SVG/SaveIcon";
 import { LoadIcon } from "../components/SVG/LoadIcon";
 import { WindowIcon } from "../components/SVG/WindowIcon";
+import { useMouseMove } from "../components/MouseUtils/UseMouseMove";
 
 export interface SidebarProps {
-	createNewNode: () => void;
+	createNewNode: (pos: { x: number; y: number }) => void;
 	loadWorkspace: () => void;
 	saveWorkspace: () => void;
 
@@ -28,6 +29,8 @@ export interface SidebarProps {
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
 
 	renameScreen: (oldName: string, newName: string) => void;
+
+	suppressKeyboardShortcuts: boolean;
 }
 
 interface SidebarHeadingProps {
@@ -59,13 +62,47 @@ const SidebarHeading: FC<SidebarHeadingProps> = ({
 	);
 };
 
-export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
+export const AppSidebar: React.FC<SidebarProps> = ({
+	createNewNode,
+	loadWorkspace,
+	saveWorkspace,
+	unsaved,
+	screenFiles,
+	currentScreen,
+	loadScreen,
+	createScreen,
+	setSelectedField,
+	renameScreen,
+	suppressKeyboardShortcuts,
+}) => {
 	const [collapsed, setCollapsed] = useState(false);
 	const [filenameSelected, setFilenameSelected] = useState(-2);
 
 	const [editedFilename, setEditedFilename] = useState<string | undefined>(
 		undefined
 	);
+
+	const mousePos = useRef({ x: 0, y: 0 });
+
+	useMouseMove((ev) => {
+		mousePos.current = { x: ev.clientX, y: ev.clientY };
+	});
+
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (suppressKeyboardShortcuts) return;
+
+			if (e.key.toLocaleLowerCase() === "e" && e.shiftKey) {
+				createNewNode(mousePos.current);
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [createNewNode, mousePos, suppressKeyboardShortcuts]);
 
 	return (
 		<div style={{ display: "flex", height: "100%" }}>
@@ -97,25 +134,25 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 						>
 							<MenuItem
 								icon={<SaveIcon size={24} />}
-								onClick={props.saveWorkspace}
+								onClick={saveWorkspace}
 								className={styles.mainMenuButton}
 							>
 								Save Screen (Ctrl+S)
 							</MenuItem>
 							<MenuItem
 								icon={<LoadIcon size={28} />}
-								onClick={props.loadWorkspace}
+								onClick={loadWorkspace}
 								className={styles.mainMenuButton}
 							>
 								Load Folder (Ctrl+O)
 							</MenuItem>
-							{props.screenFiles.length > 0 && (
+							{screenFiles.length > 0 && (
 								<SubMenu
 									icon={<WindowIcon size={28} />}
 									label="Screens"
 									className={`${styles.submenuBox} ${styles.mainMenuButton}`}
 								>
-									{props.screenFiles.map((file, idx) => {
+									{screenFiles.map((file, idx) => {
 										let fileDisplay = file ?? "";
 
 										if (
@@ -126,9 +163,9 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 										} else {
 											fileDisplay = file.replace(/\.(json)$/, "");
 											if (filenameSelected !== idx) {
-												if (file === props.currentScreen) {
+												if (file === currentScreen) {
 													fileDisplay = "> " + fileDisplay;
-													if (props.unsaved) fileDisplay += "*";
+													if (unsaved) fileDisplay += "*";
 												}
 											}
 										}
@@ -137,7 +174,7 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 											<MenuItem
 												className={styles.submenuEntry}
 												key={file}
-												onClick={() => props.loadScreen(file)}
+												onClick={() => loadScreen(file)}
 											>
 												{collapsed ? (
 													<p className={styles.filenameFieldNonEditable}>
@@ -147,24 +184,18 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 													<input
 														onClick={(e) => e.stopPropagation()}
 														onFocus={(e) => {
-															props.setSelectedField(idx + "#screenNameField");
+															setSelectedField(idx + "#screenNameField");
 															setFilenameSelected(idx);
 														}}
 														onBlur={(e) => {
-															props.setSelectedField(
-																"",
-																idx + "#screenNameField"
-															);
+															setSelectedField("", idx + "#screenNameField");
 															setFilenameSelected(-2);
 
 															if (
 																editedFilename !== undefined &&
 																editedFilename !== ""
 															) {
-																props.renameScreen(
-																	file,
-																	editedFilename + ".json"
-																);
+																renameScreen(file, editedFilename + ".json");
 															}
 
 															setEditedFilename(undefined);
@@ -185,7 +216,7 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 												className={styles.filenameField}
 												autoFocus={true}
 												onFocus={(e) => {
-													props.setSelectedField("#newScreenField");
+													setSelectedField("#newScreenField");
 													setFilenameSelected(-1);
 												}}
 												onBlur={(e) => {
@@ -193,9 +224,9 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 														editedFilename !== undefined &&
 														editedFilename !== ""
 													) {
-														props.createScreen(editedFilename + ".json");
+														createScreen(editedFilename + ".json");
 													}
-													props.setSelectedField("", "#newScreenField");
+													setSelectedField("", "#newScreenField");
 													setEditedFilename(undefined);
 													setFilenameSelected(-2);
 												}}
@@ -218,7 +249,9 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 						<Menu>
 							<MenuItem
 								icon={<PlusIcon2 size={32} />}
-								onClick={props.createNewNode}
+								onClick={() => {
+									createNewNode(mousePos.current);
+								}}
 								className={styles.mainMenuButton}
 							>
 								New Node (Shift+E)
@@ -251,12 +284,12 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 					</div>
 					{collapsed ? (
 						<div className={styles.legalText}>
-							v0.3
+							v0.4-alpha
 							<p>EVALUATION</p>
 						</div>
 					) : (
 						<div className={styles.legalText}>
-							v0.3 (c) 2023 Rozalily
+							v0.4-alpha (c) 2023 Rozalily
 							<p>For evaluation purposes only.</p>
 						</div>
 					)}

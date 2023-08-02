@@ -1,5 +1,3 @@
-
-
 .wholeAppContainer {
   display: flex;
   flex-direction: row;
@@ -19,25 +17,6 @@
   &:active {
     cursor: grabbing;
   }
-}
-
-.wholeAppBg {
-  background-image: url('../public/pengtile_fl.png');
-  background-repeat: repeat;
-  top: -200%;
-  left: -200%;
-  width: 800%;
-  height: 800%;
-  position: absolute;
-}
-
-.appBgContainer {
-  top: 0px;
-  left: 0px;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
 }
 
 .mainContainer {

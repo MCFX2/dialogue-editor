@@ -3,7 +3,7 @@ import { AppSidebar } from "./sidebar/Sidebar";
 import styles from "./App.module.scss";
 import { useMouseMove } from "./components/MouseUtils/UseMouseMove";
 import { useMouseRelease } from "./components/MouseUtils/UseMouseClick";
-import { NodeWindow } from "./components/NodeWindow/NodeWindow";
+import { NodeWindow, recursiveCalculateHeight } from "./components/NodeWindow/NodeWindow";
 import { NodeControl } from "./components/NodeWindow/NodeControl";
 import * as uuid from "uuid";
 import { Canvas } from "./components/Canvas/Canvas";
@@ -13,6 +13,8 @@ import {
 	renameScreen,
 	saveScreen,
 } from "./components/FileIO";
+import { Modal } from "./components/Modals/Modal";
+import { Background } from "./components/Background/Background";
 
 export interface NodeHandle {
 	name: string;
@@ -37,11 +39,6 @@ function App() {
 		undefined
 	);
 
-	const worldSize = { width: 2160, height: 1528 };
-
-	// this state is the single biggest performance bottleneck in the entire app
-	const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
 	const [IOState, setIOState] = useState<FilesystemState>({});
 
 	const [unsaved, setUnsaved] = useState(false);
@@ -50,20 +47,12 @@ function App() {
 	// so we can disable keyboard shortcuts
 	const [selectedField, setSelectedField] = useState("");
 
-	const clampBgPosition = (x: number, y: number) => {
-		const { width, height } = worldSize;
-		while (x < -width) x += width;
-		while (x > width) x -= width;
-		while (y < -height) y += height;
-		while (y > height) y -= height;
-		return { x, y };
-	};
-
 	// click and drag to move the background
 	// we also hijack these hooks for parts of the node drag and drop feature
 	useMouseMove((e) => {
 		if (draggingControl !== undefined) {
 			e.preventDefault();
+			const mousePos = { x: e.clientX, y: e.clientY };
 			// determine which node our mouse is over
 			const candidateNodes = screen.filter((n) => {
 				// check width first since that's cheaper
@@ -74,9 +63,7 @@ function App() {
 					return false;
 				}
 				// then height
-				const calculatedHeight = n.controls.reduce<number>((prev, cur) => {
-					return prev + cur.renderHeight;
-				}, 96);
+				const calculatedHeight = recursiveCalculateHeight(n.controls, 9999) + 96;
 
 				return (
 					mousePos.y > n.worldPosition.y + cameraPosition.y &&
@@ -100,8 +87,6 @@ function App() {
 				y: prev.y + e.movementY,
 			}));
 		}
-
-		setMousePos({ x: e.clientX, y: e.clientY });
 	});
 
 	useMouseRelease((e) => {
@@ -133,15 +118,15 @@ function App() {
 
 	const [screen, updateScreen] = useState<NodeHandle[]>([]);
 
-	const makeNode = () => {
+	const makeNode = (screenPosition: {x: number, y: number}) => {
 		!unsaved && setUnsaved(true);
 		updateScreen([
 			...screen,
 			{
 				name: "Empty Node",
 				worldPosition: {
-					x: -cameraPosition.x + mousePos.x,
-					y: -cameraPosition.y + mousePos.y,
+					x: -cameraPosition.x + screenPosition.x,
+					y: -cameraPosition.y + screenPosition.y,
 				},
 				controls: [],
 				uuid: uuid.v4(),
@@ -182,22 +167,19 @@ function App() {
 	};
 
 	const saveAction = async () => {
-		setIOState(await saveScreen(IOState, screen, "untitled.json"));
-		unsaved && setUnsaved(false);
+		try {
+			setIOState(await saveScreen(IOState, screen, "untitled.json"));
+			unsaved && setUnsaved(false);
+		} catch (e) {
+			console.log(e);
+		}
 	};
-
-	const bgPos = clampBgPosition(cameraPosition.x, cameraPosition.y);
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			// keyboard shortcuts
 			if (selectedField !== "") {
 				return;
-			}
-
-			// make node
-			if (e.shiftKey && e.key.toLowerCase() === "e") {
-				makeNode();
 			}
 
 			// save
@@ -210,14 +192,33 @@ function App() {
 			if (e.ctrlKey && e.key.toLowerCase() === "o") {
 				e.preventDefault(); // suppress browser open dialog
 				// load workspace
-				initWorkspace(IOState).then((newState) => {
-					setIOState(newState);
-				});
+				initWorkspace(IOState)
+					.then((newState) => {
+						setIOState(newState);
+					})
+					.catch((e) => {
+						console.log(e);
+					});
 			}
 		};
 		document.addEventListener("keydown", handleKeyDown);
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
+		};
+	});
+
+	// warn the user if they try to close the window with unsaved changes
+
+	useEffect(() => {
+		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+			if (unsaved) {
+				e.preventDefault();
+				e.returnValue = "";
+			}
+		};
+		window.addEventListener("beforeunload", handleBeforeUnload);
+		return () => {
+			window.removeEventListener("beforeunload", handleBeforeUnload);
 		};
 	});
 
@@ -278,28 +279,40 @@ function App() {
 		}
 	};
 
+	const isNodeVisible = (node: NodeHandle) => {
+		const calculatedHeight = recursiveCalculateHeight(node.controls, 9999) + 96;
+		return (
+			node.worldPosition.x + cameraPosition.x + node.width > 0 &&
+			node.worldPosition.x + cameraPosition.x < window.innerWidth &&
+			node.worldPosition.y + cameraPosition.y + calculatedHeight > 0 &&
+			node.worldPosition.y + cameraPosition.y < window.innerHeight
+		);
+	};
+
 	const allNodeConnections = screen.reduce<NodeControl[]>((prev, cur) => {
 		return [...prev, ...getAllDraggableNodeControls(cur)];
 	}, []);
 
 	return (
 		<>
-			<div className={styles.appBgContainer}>
-				<div
-					className={styles.wholeAppBg}
-					style={{
-						transform: `translate(${bgPos.x}px, ${bgPos.y}px)`,
-						backgroundSize: `${worldSize.width}px ${worldSize.height}px`,
-					}}
-				/>
-			</div>
-
+			<title>
+				{IOState.currentScreenFile
+					? IOState.currentScreenFile.name + (unsaved ? "*" : "")
+					: unsaved
+					? "Untitled Screen*"
+					: "Nodedit"}
+			</title>
+			<Background cameraPos={cameraPosition} />
 			<div className={styles.wholeAppContainer}>
 				<AppSidebar
 					createScreen={createScreen}
 					createNewNode={makeNode}
 					loadWorkspace={async () => {
-						setIOState(await initWorkspace(IOState));
+						try {
+							setIOState(await initWorkspace(IOState));
+						} catch (e) {
+							console.log(e);
+						}
 					}}
 					saveWorkspace={() => {
 						saveAction();
@@ -323,12 +336,12 @@ function App() {
 					renameScreen={async (oldName, newName) => {
 						setIOState(await renameScreen(IOState, oldName, newName));
 					}}
+					suppressKeyboardShortcuts={selectedField !== ""}
 				/>
 				<Canvas
 					cameraPosition={cameraPosition}
 					nodes={nodeTable}
 					nodeConnections={allNodeConnections}
-					mousePos={mousePos}
 					newTargetFrom={draggingControl}
 				/>
 				<div
@@ -339,7 +352,7 @@ function App() {
 					}}
 				>
 					{screen.map((node) => (
-						<NodeWindow
+						isNodeVisible(node) && <NodeWindow
 							key={node.uuid}
 							addControl={(control) => {
 								const newControl = { ...control };
