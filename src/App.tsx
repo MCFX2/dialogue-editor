@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppSidebar } from "./sidebar/Sidebar";
 import styles from "./App.module.scss";
 import { useMouseMove } from "./components/MouseUtils/UseMouseMove";
 import { useMouseRelease } from "./components/MouseUtils/UseMouseClick";
-import { NodeWindow, recursiveCalculateHeight } from "./components/NodeWindow/NodeWindow";
+import {
+	NodeWindow,
+	recursiveCalculateHeight,
+} from "./components/NodeWindow/NodeWindow";
 import { NodeControl } from "./components/NodeWindow/NodeControl";
 import * as uuid from "uuid";
 import { Canvas } from "./components/Canvas/Canvas";
@@ -63,7 +66,8 @@ function App() {
 					return false;
 				}
 				// then height
-				const calculatedHeight = recursiveCalculateHeight(n.controls, 9999) + 96;
+				const calculatedHeight =
+					recursiveCalculateHeight(n.controls, 9999) + 96;
 
 				return (
 					mousePos.y > n.worldPosition.y + cameraPosition.y &&
@@ -118,7 +122,7 @@ function App() {
 
 	const [screen, updateScreen] = useState<NodeHandle[]>([]);
 
-	const makeNode = (screenPosition: {x: number, y: number}) => {
+	const makeNode = (screenPosition: { x: number; y: number }) => {
 		!unsaved && setUnsaved(true);
 		updateScreen([
 			...screen,
@@ -293,6 +297,8 @@ function App() {
 		return [...prev, ...getAllDraggableNodeControls(cur)];
 	}, []);
 
+	const fieldRef = useRef<HTMLDivElement>(null);
+
 	return (
 		<>
 			<title>
@@ -350,87 +356,107 @@ function App() {
 						if (e.target === e.currentTarget && e.button === 0)
 							setGrabbing(true);
 					}}
+					onScroll={(e) => {
+						//console.log("scroll");
+						//e.preventDefault();
+						//e.stopPropagation();
+						window.scrollTo(0, 0);
+						
+						if (fieldRef.current) {
+							fieldRef.current.scrollLeft = 0;
+							fieldRef.current.scrollTop = 0;
+						}
+					}}
+					ref={fieldRef}
 				>
-					{screen.map((node) => (
-						isNodeVisible(node) && <NodeWindow
-							key={node.uuid}
-							addControl={(control) => {
-								const newControl = { ...control };
-								newControl.uuid = uuid.v4();
-								newControl.parent = node.uuid;
-								node.controls.push(newControl);
-								recalculateIndices(node);
-								!unsaved && setUnsaved(true);
-								updateScreen([...screen]);
-							}}
-							updateControl={(uuid, newControl) => {
-								node.controls[node.controls.findIndex((e) => e.uuid === uuid)] =
-									newControl;
-								recalculateIndices(node);
-								!unsaved && setUnsaved(true);
-								updateScreen([...screen]);
-							}}
-							removeControl={(uuid) => {
-								node.controls = node.controls.filter((c) => c.uuid !== uuid);
-								// recalculate indices
-								recalculateIndices(node);
-								!unsaved && setUnsaved(true);
-								updateScreen([...screen]);
-							}}
-							setTitle={(title) => {
-								node.name = title;
-								!unsaved && setUnsaved(true);
-								updateScreen([...screen]);
-							}}
-							controls={node.controls}
-							renderPosition={{
-								x: cameraPosition.x + node.worldPosition.x,
-								y: cameraPosition.y + node.worldPosition.y,
-							}}
-							setRenderPosition={(newPos) => {
-								node.worldPosition = {
-									x: newPos.x - cameraPosition.x,
-									y: newPos.y - cameraPosition.y,
-								};
-								!unsaved && setUnsaved(true);
-								updateScreen([...screen]);
-							}}
-							deleteNode={() => {
-								// break all connections to this node
-								for (const field of allNodeConnections) {
-									if (field.content === node.uuid) {
-										field.content = undefined;
+					{screen.map(
+						(node) =>
+							isNodeVisible(node) && (
+								<NodeWindow
+									key={node.uuid}
+									addControl={(control) => {
+										const newControl = { ...control };
+										newControl.uuid = uuid.v4();
+										newControl.parent = node.uuid;
+										node.controls.push(newControl);
+										recalculateIndices(node);
+										!unsaved && setUnsaved(true);
+										updateScreen([...screen]);
+									}}
+									updateControl={(uuid, newControl) => {
+										node.controls[
+											node.controls.findIndex((e) => e.uuid === uuid)
+										] = newControl;
+										recalculateIndices(node);
+										!unsaved && setUnsaved(true);
+										updateScreen([...screen]);
+									}}
+									removeControl={(uuid) => {
+										node.controls = node.controls.filter(
+											(c) => c.uuid !== uuid
+										);
+										// recalculate indices
+										recalculateIndices(node);
+										!unsaved && setUnsaved(true);
+										updateScreen([...screen]);
+									}}
+									setTitle={(title) => {
+										node.name = title;
+										!unsaved && setUnsaved(true);
+										updateScreen([...screen]);
+									}}
+									controls={node.controls}
+									renderPosition={{
+										x: cameraPosition.x + node.worldPosition.x,
+										y: cameraPosition.y + node.worldPosition.y,
+									}}
+									setRenderPosition={(newPos) => {
+										node.worldPosition = {
+											x: newPos.x - cameraPosition.x,
+											y: newPos.y - cameraPosition.y,
+										};
+										!unsaved && setUnsaved(true);
+										updateScreen([...screen]);
+									}}
+									deleteNode={() => {
+										// break all connections to this node
+										for (const field of allNodeConnections) {
+											if (field.content === node.uuid) {
+												field.content = undefined;
+											}
+										}
+										!unsaved && setUnsaved(true);
+										updateScreen([
+											...screen.filter((n) => n.uuid !== node.uuid),
+										]);
+									}}
+									width={node.width}
+									setWidth={(newWidth) => {
+										node.width = newWidth;
+										!unsaved && setUnsaved(true);
+										updateScreen([...screen]);
+									}}
+									pickUpControl={pickUpControl}
+									title={node.name}
+									nodeTable={nodeTable}
+									isSelected={
+										draggingControl !== undefined &&
+										targetNode?.uuid === node.uuid &&
+										draggingControl.parent !== node.uuid
 									}
-								}
-								!unsaved && setUnsaved(true);
-								updateScreen([...screen.filter((n) => n.uuid !== node.uuid)]);
-							}}
-							width={node.width}
-							setWidth={(newWidth) => {
-								node.width = newWidth;
-								!unsaved && setUnsaved(true);
-								updateScreen([...screen]);
-							}}
-							pickUpControl={pickUpControl}
-							title={node.name}
-							nodeTable={nodeTable}
-							isSelected={
-								draggingControl !== undefined &&
-								targetNode?.uuid === node.uuid &&
-								draggingControl.parent !== node.uuid
-							}
-							setSelectedField={(uuid, oldUuid) => {
-								if (oldUuid !== undefined) {
-									// we're done typing
-									if (selectedField === oldUuid) {
-										setSelectedField("");
-									}
-								} else {
-									setSelectedField(uuid);
-								}
-							}}
-						/>
-					))}
+									setSelectedField={(uuid, oldUuid) => {
+										if (oldUuid !== undefined) {
+											// we're done typing
+											if (selectedField === oldUuid) {
+												setSelectedField("");
+											}
+										} else {
+											setSelectedField(uuid);
+										}
+									}}
+								/>
+							)
+					)}
 				</div>
 			</div>
 		</>

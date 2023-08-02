@@ -86,15 +86,17 @@ const ControlHolder: FC<ControlHolderProps> = ({
 				<MinusIcon size={32} />
 			</div>
 			{index !== undefined ? (
-				<div className={styles.controlIndex} style={{
-					width: `${16 + sliderOffset}px`,
-				}}>
+				<div
+					className={styles.controlIndex}
+					style={{
+						width: `${16 + sliderOffset}px`,
+					}}
+				>
 					{index}
 				</div>
 			) : (
 				<input
 					className={styles.controlLabelEditable}
-					autoFocus={false}
 					placeholder="(label)"
 					type="text"
 					value={text}
@@ -151,7 +153,8 @@ export const ControlElement: FC<ControlElementProps> = ({
 	leftPad = 0,
 	index,
 }) => {
-	const controlWidth = windowWidth - 172 - sliderOffset - leftPad + (index !== undefined ? 84 : 0);
+	const controlWidth =
+		windowWidth - 172 - sliderOffset - leftPad + (index !== undefined ? 84 : 0);
 
 	return node.type === "array" ? (
 		<ArrayControl
@@ -168,7 +171,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 			index={index}
 		/>
 	) : (
-			<ControlHolder
+		<ControlHolder
 			index={index}
 			leftPad={leftPad}
 			onSliderGrab={onSliderGrab}

@@ -62,7 +62,7 @@ const SidebarHeading: FC<SidebarHeadingProps> = ({
 	);
 };
 
-export const AppSidebar: React.FC<SidebarProps> = ({
+export const AppSidebar: FC<SidebarProps> = ({
 	createNewNode,
 	loadWorkspace,
 	saveWorkspace,
@@ -284,12 +284,12 @@ export const AppSidebar: React.FC<SidebarProps> = ({
 					</div>
 					{collapsed ? (
 						<div className={styles.legalText}>
-							v0.4-alpha
+							v0.4
 							<p>EVALUATION</p>
 						</div>
 					) : (
 						<div className={styles.legalText}>
-							v0.4-alpha (c) 2023 Rozalily
+							v0.4 (c) 2023 Rozalily
 							<p>For evaluation purposes only.</p>
 						</div>
 					)}
