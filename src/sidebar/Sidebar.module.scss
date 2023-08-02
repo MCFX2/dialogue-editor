@@ -204,6 +204,22 @@
 	text-shadow: 1px 1px 1px #000;
 }
 
+.mainMenuButton > div > ul {
+	overflow-y: hidden;
+}
+
+/* \/ uncomment if you change overflow-y above to scroll \/ */
+
+/*
+.mainMenuButton > div > ul::-webkit-scrollbar {
+	display: none;
+}
+*/
+
+.mainMenuButton > div {
+	border: 2px solid black;
+}
+
 .filenameField {
 	@extend .generalControl;
 
@@ -211,4 +227,19 @@
 	width: 120px;
 
 	text-shadow: 1px 1px 1px #000;
+}
+
+.filenameFieldNonEditable {
+	@extend .filenameField;
+
+	color: #eee;
+	background-color: #00000000;
+
+	&:hover
+	{
+		box-shadow: none;
+		background-color: #00000000;
+
+		user-select: none;
+	}
 }

@@ -139,67 +139,76 @@ export const AppSidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
 												key={file}
 												onClick={() => props.loadScreen(file)}
 											>
-												<input
-													contentEditable={collapsed ? false : true}
-													onClick={(e) => e.stopPropagation()}
-													onFocus={(e) => {
-														props.setSelectedField(idx + "#screenNameField");
-														setFilenameSelected(idx);
-													}}
-													onBlur={(e) => {
-														props.setSelectedField(
-															"",
-															idx + "#screenNameField"
-														);
-														setFilenameSelected(-2);
-
-														if (
-															editedFilename !== undefined &&
-															editedFilename !== ""
-														) {
-															props.renameScreen(
-																file,
-																editedFilename + ".json"
+												{collapsed ? (
+													<p className={styles.filenameFieldNonEditable}>
+														{fileDisplay}
+													</p>
+												) : (
+													<input
+														onClick={(e) => e.stopPropagation()}
+														onFocus={(e) => {
+															props.setSelectedField(idx + "#screenNameField");
+															setFilenameSelected(idx);
+														}}
+														onBlur={(e) => {
+															props.setSelectedField(
+																"",
+																idx + "#screenNameField"
 															);
-														}
+															setFilenameSelected(-2);
 
-														setEditedFilename(undefined);
-													}}
-													className={styles.filenameField}
-													value={fileDisplay}
-													onChange={(e) => {
-														setEditedFilename(e.target.value);
-													}}
-												/>
+															if (
+																editedFilename !== undefined &&
+																editedFilename !== ""
+															) {
+																props.renameScreen(
+																	file,
+																	editedFilename + ".json"
+																);
+															}
+
+															setEditedFilename(undefined);
+														}}
+														className={styles.filenameField}
+														value={fileDisplay}
+														onChange={(e) => {
+															setEditedFilename(e.target.value);
+														}}
+													/>
+												)}
 											</MenuItem>
 										);
 									})}
-									<MenuItem className={styles.submenuEntry}>
-										<input
-											className={styles.filenameField}
-											autoFocus={true}
-											onFocus={(e) => {
-												props.setSelectedField("#newScreenField");
-												setFilenameSelected(-1);
-											}}
-											onBlur={(e) => {
-												if (
-													editedFilename !== undefined &&
-													editedFilename !== ""
-												) {
-													props.createScreen(editedFilename + ".json");
+									{!collapsed && (
+										<MenuItem className={styles.submenuEntry}>
+											<input
+												className={styles.filenameField}
+												autoFocus={true}
+												onFocus={(e) => {
+													props.setSelectedField("#newScreenField");
+													setFilenameSelected(-1);
+												}}
+												onBlur={(e) => {
+													if (
+														editedFilename !== undefined &&
+														editedFilename !== ""
+													) {
+														props.createScreen(editedFilename + ".json");
+													}
+													props.setSelectedField("", "#newScreenField");
+													setEditedFilename(undefined);
+													setFilenameSelected(-2);
+												}}
+												value={
+													filenameSelected === -1 ? editedFilename : "" ?? ""
 												}
-												props.setSelectedField("", "#newScreenField");
-												setEditedFilename(undefined);
-												setFilenameSelected(-2);
-											}}
-											value={filenameSelected === -1 ? editedFilename : '' ?? ""}
-											onChange={(e) => {
-												setEditedFilename(e.target.value);
-											}}
-											placeholder="+ New Screen"
-										/>
-									</MenuItem>
+												onChange={(e) => {
+													setEditedFilename(e.target.value);
+												}}
+												placeholder="+ New Screen"
+											/>
+										</MenuItem>
+									)}
 								</SubMenu>
 							)}
 						</Menu>

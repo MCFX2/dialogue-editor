@@ -8,6 +8,7 @@ export declare const defaultText: string;
 export declare const deleteControlButton: string;
 export declare const disableColor: string;
 export declare const filenameField: string;
+export declare const filenameFieldNonEditable: string;
 export declare const generalControl: string;
 export declare const headerLogo: string;
 export declare const icon: string;

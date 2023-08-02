@@ -30,7 +30,6 @@ export const AddControlButton: FC<AddControlButtonProps> = ({
 						autoFocus={true}
 						className={styles.searchBar}
 						onBlur={() => {
-							console.log("blur");
 							setShowAddMenu(false);
 							setSearchText("");
 							// todo: it might be necessary to include the node uuid here
