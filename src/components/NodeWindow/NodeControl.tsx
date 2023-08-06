@@ -257,6 +257,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 							selected ? undefined : node.uuid
 						);
 					}}
+					forceInvalid={invalid}
 				/>
 			) : node.type === "number" ? (
 				<NumberNodeControl

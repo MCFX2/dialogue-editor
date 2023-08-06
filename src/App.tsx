@@ -515,6 +515,7 @@ function App() {
 					<Modal closeModal={() => setCurrentModal(undefined)}>
 						{currentModal === "composite" ? (
 							<CompositeModal
+								existingComposites={IOState.compositeList ?? []}
 								controlCandidates={controlCandidates}
 								setSelectedField={updateSelectedField}
 								saveComposite={async (c) => {

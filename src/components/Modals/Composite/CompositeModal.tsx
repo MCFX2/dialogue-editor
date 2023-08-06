@@ -22,18 +22,21 @@ export interface CompositeModalProps {
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
 	saveComposite: (composite: Composite) => void;
 	controlCandidates: NodeControl[];
+	existingComposites: Composite[];
 }
 
 export const CompositeModal: FC<CompositeModalProps> = ({
 	setSelectedField,
 	saveComposite,
 	controlCandidates,
+	existingComposites,
 }) => {
 	const [currentComposite, setCurrentComposite] = useState<Composite>({
 		name: {
 			...DefaultTextControl,
 			label: "Composite Name",
 			uuid: "#newCompositeControl",
+			restrictionIdentifier: "regex:/^(?!\\s)[a-zA-Z0-9_ .-]+(?<![\\s.])$/g//,",
 		},
 		fields: {},
 	});
@@ -77,7 +80,12 @@ export const CompositeModal: FC<CompositeModalProps> = ({
 		recursiveCalculateHeight(controlArray, 9999) +
 		198;
 
-	let valid = true;
+	let valid =
+		currentComposite.name.content !== "" &&
+		controlArray.length > 0 &&
+		!existingComposites.find(
+			(c) => c.name.content === currentComposite.name.content
+		);
 
 	return (
 		<ResizableWindow
@@ -111,6 +119,7 @@ export const CompositeModal: FC<CompositeModalProps> = ({
 						},
 					});
 				}}
+				invalid={!valid}
 			/>
 			{Object.keys(currentComposite.fields).map((key) => {
 				const isInvalid =

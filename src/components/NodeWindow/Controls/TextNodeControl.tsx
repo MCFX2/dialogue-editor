@@ -21,6 +21,7 @@ export interface TextNodeControlProps {
 	controlWidth: number;
 	setSelectedField: (selected: boolean) => void;
 	restrictionId?: string;
+	forceInvalid?: boolean;
 }
 
 export const TextNodeControl: FC<TextNodeControlProps> = ({
@@ -29,10 +30,11 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 	controlWidth,
 	setSelectedField,
 	restrictionId,
+	forceInvalid = false,
 }) => {
 	const args = extractArguments(restrictionId);
 
-	let valid = true;
+	let valid = !forceInvalid;
 	if (args["regex"] !== undefined) {
 		const regex = new RegExp(args["regex"]);
 
