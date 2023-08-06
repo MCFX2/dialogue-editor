@@ -94,6 +94,14 @@
 		background-color: #000000aa;
 		cursor: pointer;
 	}
+
+	&:disabled
+	{
+		background-color: #00000066;
+		color: #aaa;
+		cursor: default;
+		border-style: dashed;
+	}
 }
 
 .searchBar

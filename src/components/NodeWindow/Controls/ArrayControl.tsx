@@ -1,11 +1,12 @@
 import { FC, Fragment } from "react";
-import { ControlElement, NodeControl } from "../NodeControl";
+import { ControlElement, DefaultControls, NodeControl } from "../NodeControl";
 import { NodeHandle } from "../../../App";
 import styles from "./Controls.module.scss";
 import { MinusIcon } from "../../SVG/MinusIcon";
 import { AddControlButton } from "../AddControlButton";
 import { v4 } from "uuid";
 import { CompositeRestrictionControl } from "../../Modals/Composite/CompositeRestrictionControl";
+import { extractArguments } from "./Sanitize";
 
 export const DefaultArrayControl: NodeControl = {
 	type: "array",
@@ -55,6 +56,35 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 }) => {
 	const children = (node.content ?? []) as NodeControl[];
 
+	const args = extractArguments(node.restrictionIdentifier);
+
+	const maxLengthArg = args["maxLength"];
+	const maxLength = maxLengthArg ? parseInt(maxLengthArg) : undefined;
+
+	const restrictTypeArg = args["type"];
+	const restrictType = restrictTypeArg
+		? DefaultControls.find((c) => {
+				if (c.type === "number") {
+					console.log(c.restrictionIdentifier);
+					if (
+						restrictTypeArg === "number|float" &&
+						(c.restrictionIdentifier === "" ||
+							c.restrictionIdentifier === undefined)
+					) {
+						return true;
+					} else if (
+						restrictTypeArg === "number|int" &&
+						c.restrictionIdentifier !== "" &&
+						c.restrictionIdentifier !== undefined
+					) {
+						return true;
+					}
+					return false;
+				}
+				return c.type === restrictTypeArg;
+		  })
+		: undefined;
+
 	return (
 		<>
 			<div
@@ -103,6 +133,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 					</div>
 				)}
 				<AddControlButton
+					disabled={maxLength !== undefined && children.length >= maxLength}
 					addControl={(c) => {
 						const newControl = { ...c };
 						newControl.index = children.length;
@@ -130,6 +161,12 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 						}px`,
 						marginTop: "0px",
 					}}
+					labelOverride={
+						"+ Add" +
+						(restrictType ? ` ${restrictType.humanName}` : "") +
+						(maxLength ? ` (${children.length}/${maxLength})` : "")
+					}
+					forcedControl={restrictType}
 				/>
 			</div>
 			<div className={styles.arrayContainer}>
@@ -177,7 +214,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 										children[idx] = newControl;
 										setValue(children);
 									}}
-									padding={leftPad}
+									padding={leftPad + 32}
 								/>
 							)}
 						</Fragment>

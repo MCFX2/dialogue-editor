@@ -10,6 +10,10 @@ export interface AddControlButtonProps {
 
 	style?: React.CSSProperties;
 	buttonStyle?: React.CSSProperties;
+
+	disabled?: boolean;
+	labelOverride?: string;
+	forcedControl?: NodeControl;
 }
 
 export const AddControlButton: FC<AddControlButtonProps> = ({
@@ -18,9 +22,27 @@ export const AddControlButton: FC<AddControlButtonProps> = ({
 	controls,
 	style,
 	buttonStyle,
+	disabled = false,
+	labelOverride,
+	forcedControl,
 }) => {
 	const [showAddMenu, setShowAddMenu] = useState(false);
 	const [searchText, setSearchText] = useState("");
+
+	const clearSelection = () => {
+		setShowAddMenu(false);
+		setSearchText("");
+		// todo: it might be necessary to include the node uuid here
+		setSelectedField("", "#addControlSearchField");
+	};
+
+	const submitControl = (control: NodeControl) => {
+		const newControl = { ...control };
+		if (newControl.type === "array") {
+			newControl.content = [];
+		}
+		addControl(newControl);
+	};
 
 	return (
 		<div className={styles.addButtonField} style={style}>
@@ -29,12 +51,7 @@ export const AddControlButton: FC<AddControlButtonProps> = ({
 					<input
 						autoFocus={true}
 						className={styles.searchBar}
-						onBlur={() => {
-							setShowAddMenu(false);
-							setSearchText("");
-							// todo: it might be necessary to include the node uuid here
-							setSelectedField("", "#addControlSearchField");
-						}}
+						onBlur={clearSelection}
 						onChange={(e) => setSearchText(e.target.value)}
 						onFocus={() => {
 							setSelectedField("#addControlSearchField");
@@ -44,14 +61,8 @@ export const AddControlButton: FC<AddControlButtonProps> = ({
 					<SearchList
 						currentIdx={controls?.length ?? 0}
 						addControl={(c) => {
-							setShowAddMenu(false);
-							setSearchText("");
-							const newControl = { ...c };
-							if (newControl.type === 'array') {
-								newControl.content = [];
-							}
-							setSelectedField('', '#addControlSearchField');
-							addControl(newControl);
+							clearSelection();
+							submitControl(c);
 						}}
 						searchText={searchText}
 						controlCandidates={DefaultControls}
@@ -59,11 +70,18 @@ export const AddControlButton: FC<AddControlButtonProps> = ({
 				</>
 			) : (
 				<button
+					disabled={disabled}
 					className={styles.addButton}
-					onClick={() => setShowAddMenu(true)}
+					onClick={() => {
+						if (!forcedControl) {
+							setShowAddMenu(true);
+						} else {
+							submitControl(forcedControl);
+						}
+					}}
 					style={buttonStyle}
 				>
-					+ Add Field
+					{labelOverride ?? "+ Add Field"}
 				</button>
 			)}
 		</div>
