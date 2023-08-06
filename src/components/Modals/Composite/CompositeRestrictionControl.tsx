@@ -1,165 +1,30 @@
-import { FC, useState } from "react";
+import { FC } from "react";
 import { NodeControl } from "../../NodeWindow/NodeControl";
 import styles from "./CompositeModal.module.scss";
-import {
-	extractArguments,
-	packArguments,
-	restrictNumber,
-	sanitizeNumber,
-} from "../../NodeWindow/Controls/Sanitize";
+import { GeneralRestrictionControl } from "./RestrictionControls/GeneralRestrictionControl";
+import { TextRestrictionControl } from "./RestrictionControls/TextRestrictionControl";
+import { NumberRestrictionControl } from "./RestrictionControls/NumberRestrictionControl";
 
 export interface CompositeRestrictionControlProps {
 	node: NodeControl;
 	updateNode: (node: NodeControl) => void;
+	padding?: number;
 }
 
-export interface GeneralRestrictionControlProps {
-	setAllowEdit: (allowEdit: boolean) => void;
-	allowEdit: boolean;
-}
-
-const GeneralRestrictionControl: FC<GeneralRestrictionControlProps> = ({
-	setAllowEdit,
-	allowEdit,
-}) => {
+const ArrayRestrictionControl: FC<RestrictionControlProps> = ({ node }) => {
 	return (
-		<div className={styles.generalRestriction}>
-			<p className={styles.generalRestrictionLabel}>
-				Allow changing value: {allowEdit ? "Yes" : "No "}
-			</p>
-			<input
-				className={styles.toggleCheckbox}
-				checked={allowEdit}
-				onChange={(e) => {
-					setAllowEdit(e.target.checked);
-				}}
-				type="checkbox"
-			/>
-		</div>
+		<>
+			<div></div>
+		</>
 	);
 };
 
-export interface TextRestrictionControlProps {
+export interface RestrictionControlProps {
 	node: NodeControl;
 	updateNode: (node: NodeControl) => void;
 }
 
-const TextRestrictionControl: FC<TextRestrictionControlProps> = ({
-	node,
-	updateNode,
-}) => {
-	const [allowEdit, setAllowEdit] = useState(true);
-	const [maxLength, setMaxLength] = useState("");
-	const [regex, setRegex] = useState(".*");
-
-	const regexIsValid = (regex: string): boolean => {
-		try {
-			new RegExp(regex);
-			return true;
-		} catch (e) {
-			return false;
-		}
-	};
-
-	return (
-		<>
-			<div className={styles.generalRestriction}>
-				<p>Max Length:</p>
-				<input
-					className={styles.generalRestrictionField}
-					value={maxLength}
-					onChange={(e) => {
-						setMaxLength(restrictNumber(e.target.value, false, false));
-					}}
-					onBlur={(e) => {
-						const num = sanitizeNumber(e.target.value);
-						setMaxLength(num);
-						const args = extractArguments(node.restrictionIdentifier);
-						if (num === "") {
-							delete args["maxLength"];
-						} else {
-							args["maxLength"] = num;
-						}
-						node.restrictionIdentifier = packArguments(args);
-						updateNode(node);
-					}}
-					type="text"
-				/>
-			</div>
-			<div className={styles.generalRestriction}>
-				<p>Regex: /</p>
-				<input
-					className={
-						regexIsValid(regex)
-							? styles.generalRestrictionField
-							: styles.generalRestrictionFieldInvalid
-					}
-					value={regex}
-					onChange={(e) => {
-						setRegex(e.target.value);
-					}}
-					onBlur={(e) => {
-						if (regexIsValid(e.target.value) && e.target.value !== "") {
-							setRegex(e.target.value);
-							const args = extractArguments(node.restrictionIdentifier);
-							args["regex"] = e.target.value;
-							node.restrictionIdentifier = packArguments(args);
-							updateNode(node);
-						} else {
-							setRegex(".*");
-							const args = extractArguments(node.restrictionIdentifier);
-							delete args["regex"];
-							node.restrictionIdentifier = packArguments(args);
-							updateNode(node);
-						}
-					}}
-					type="text"
-				/>
-				<p>/g</p>
-			</div>
-			<GeneralRestrictionControl
-				allowEdit={allowEdit}
-				setAllowEdit={setAllowEdit}
-			/>
-		</>
-	);
-};
-
-export interface NumberRestrictionControlProps {
-	node: NodeControl;
-}
-
-const NumberRestrictionControl: FC<NumberRestrictionControlProps> = ({
-	node,
-}) => {
-	const [allowEdit, setAllowEdit] = useState(true);
-
-	return (
-		<>
-			<div></div>
-			<GeneralRestrictionControl
-				allowEdit={allowEdit}
-				setAllowEdit={setAllowEdit}
-			/>
-		</>
-	);
-};
-
-export interface ArrayRestrictionControlProps {
-	node: NodeControl;
-}
-
-const ArrayRestrictionControl: FC<ArrayRestrictionControlProps> = ({
-	node,
-}) => {
-	return (
-		<>
-			<div></div>
-		</>
-	);
-};
-
-const restrictionTable: { [type: string]: FC<any> } = {
+const restrictionTable: { [type: string]: FC<RestrictionControlProps> } = {
 	string: TextRestrictionControl,
 	number: NumberRestrictionControl,
 	array: ArrayRestrictionControl,
@@ -188,7 +53,7 @@ const generalRestrictionHeight = 50;
 
 const restrictionHeightTable: { [type: string]: number } = {
 	string: generalRestrictionHeight + 64,
-	number: generalRestrictionHeight,
+	number: generalRestrictionHeight + 32,
 	array: 10,
 	boolean: generalRestrictionHeight,
 	node: 0,
@@ -197,11 +62,14 @@ const restrictionHeightTable: { [type: string]: number } = {
 
 export const CompositeRestrictionControl: FC<
 	CompositeRestrictionControlProps
-> = ({ node, updateNode }) => {
+> = ({ node, updateNode, padding = 0 }) => {
 	if (node.type === "node") return <></>;
 
 	return (
-		<div className={styles.restrictionContainer}>
+		<div
+			className={styles.restrictionContainer}
+			style={{ marginLeft: `${32 + padding}px` }}
+		>
 			{restrictionTable.hasOwnProperty(node.type)
 				? restrictionTable[node.type]({ node, updateNode })
 				: "UNKNOWN NODE TYPE: " + node.type}

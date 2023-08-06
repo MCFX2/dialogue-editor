@@ -100,7 +100,11 @@ const ControlHolder: FC<ControlHolderProps> = ({
 				</div>
 			) : setText ? (
 				<input
-					className={invalid ? styles.controlLabelEditableInvalid : styles.controlLabelEditable}
+					className={
+						invalid
+							? styles.controlLabelEditableInvalid
+							: styles.controlLabelEditable
+					}
 					placeholder="(label)"
 					type="text"
 					value={text}
@@ -150,6 +154,7 @@ export interface ControlElementProps {
 	leftPad?: number;
 	index?: number;
 	invalid?: boolean;
+	restrict?: boolean;
 }
 
 // generates a JSX element for a primitive control
@@ -167,6 +172,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 	leftPad = 0,
 	invalid = false,
 	index,
+	restrict,
 }) => {
 	const controlWidth =
 		windowWidth - 172 - sliderOffset - leftPad + (index !== undefined ? 84 : 0);
@@ -185,6 +191,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 			leftPad={leftPad}
 			index={index}
 			invalid={invalid}
+			restrict={restrict}
 		/>
 	) : (
 		<ControlHolder
@@ -209,6 +216,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 					controlWidth={controlWidth}
 					setValue={setValueAndHeight}
 					value={node.content}
+					restriction={node.restrictionIdentifier}
 				/>
 			) : node.type === "node" ? (
 				<DraggableNodeControl
@@ -221,8 +229,8 @@ export const ControlElement: FC<ControlElementProps> = ({
 				<TextNodeControl
 					value={node.content}
 					setValue={setValueAndHeight}
-								controlWidth={controlWidth}
-								restrictionId={node.restrictionIdentifier}
+					controlWidth={controlWidth}
+					restrictionId={node.restrictionIdentifier}
 					setSelectedField={(selected) => {
 						setSelectedField(
 							selected ? node.uuid : "",

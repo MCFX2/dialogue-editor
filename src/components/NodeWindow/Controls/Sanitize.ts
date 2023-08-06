@@ -80,8 +80,10 @@ export const extractArguments = (restrictionId?: string) => {
 	if (regexArg > 7) {
 		const firstSplit = restrictionId.slice(0, regexArg - 7).split(",");
 		for (const arg of firstSplit) {
-			const splitArg = arg.split(":");
-			args[splitArg[0]] = splitArg[1];
+			if (arg.length > 0) {
+				const splitArg = arg.split(":");
+				args[splitArg[0]] = splitArg[1];
+			}
 		}
 	}
 
@@ -89,8 +91,19 @@ export const extractArguments = (restrictionId?: string) => {
 	if (regexEnd !== Infinity && regexEnd + 5 < restrictionId.length) {
 		const secondSplit = restrictionId.slice(regexEnd + 5).split(",");
 		for (const arg of secondSplit) {
-			const splitArg = arg.split(":");
-			args[splitArg[0]] = splitArg[1];
+			if (arg.length > 0) {
+				const splitArg = arg.split(":");
+				args[splitArg[0]] = splitArg[1];
+			}
+		}
+	} else if (regexEnd === Infinity && regexArg === 6) {
+		// no regex argument, parse the whole thing as normal
+		const split = restrictionId.split(",");
+		for (const arg of split) {
+			if (arg.length > 0) {
+				const splitArg = arg.split(":");
+				args[splitArg[0]] = splitArg[1];
+			}
 		}
 	}
 

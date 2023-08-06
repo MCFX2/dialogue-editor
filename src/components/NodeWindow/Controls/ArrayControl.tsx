@@ -1,10 +1,11 @@
-import { FC } from "react";
+import { FC, Fragment } from "react";
 import { ControlElement, NodeControl } from "../NodeControl";
 import { NodeHandle } from "../../../App";
 import styles from "./Controls.module.scss";
 import { MinusIcon } from "../../SVG/MinusIcon";
 import { AddControlButton } from "../AddControlButton";
 import { v4 } from "uuid";
+import { CompositeRestrictionControl } from "../../Modals/Composite/CompositeRestrictionControl";
 
 export const DefaultArrayControl: NodeControl = {
 	type: "array",
@@ -34,6 +35,7 @@ export interface ArrayControlProps {
 	leftPad: number;
 	index?: number;
 	invalid?: boolean;
+	restrict?: boolean;
 }
 
 export const ArrayControl: FC<ArrayControlProps> = ({
@@ -49,6 +51,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 	leftPad,
 	index,
 	invalid = false,
+	restrict = false,
 }) => {
 	const children = (node.content ?? []) as NodeControl[];
 
@@ -61,18 +64,22 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 					width: `${windowWidth - leftPad}px`,
 				}}
 			>
-				{deleteControl && <div className={styles.deleteControlButton} onClick={deleteControl}>
-					<MinusIcon size={32} />
-				</div>}
+				{deleteControl && (
+					<div className={styles.deleteControlButton} onClick={deleteControl}>
+						<MinusIcon size={32} />
+					</div>
+				)}
 				{index === undefined ? (
 					<input
 						className={invalid ? styles.arrayTitleInvalid : styles.arrayTitle}
-						placeholder='(label)'
+						placeholder="(label)"
 						value={node.label ?? ""}
 						onChange={(e) => setLabel(e.target.value)}
 						type={"text"}
 						style={{
-							width: `${windowWidth - 300 - leftPad / 2 - 48 + (deleteControl ? 0 : 32)}px`,
+							width: `${
+								windowWidth - 300 - leftPad / 2 - 48 + (deleteControl ? 0 : 32)
+							}px`,
 						}}
 						onFocus={() => {
 							setSelectedField(node.uuid);
@@ -86,7 +93,9 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 						className={styles.arrayIndex}
 						style={{
 							width: `${
-								(index === undefined ? windowWidth - 300 - leftPad / 2 - 48 : 16) + (deleteControl ? 0 : 32)
+								(index === undefined
+									? windowWidth - 300 - leftPad / 2 - 48
+									: 16) + (deleteControl ? 0 : 32)
 							}px`,
 						}}
 					>
@@ -126,37 +135,52 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 			<div className={styles.arrayContainer}>
 				{children.map((child, idx) => {
 					return (
-						<ControlElement
-							key={child.uuid}
-							index={idx}
-							leftPad={32 + leftPad}
-							deleteControl={() => {
-								const updatedChildren = children.filter(
-									(c) => c.uuid !== child.uuid
-								);
-								setValue(updatedChildren);
-							}}
-							node={child}
-							nodeTable={nodeTable}
-							windowWidth={windowWidth}
-							setLabel={(newLabel) => {
-								const newControl = { ...child };
-								newControl.label = newLabel;
-								children[idx] = newControl;
-								setValue(children);
-							}}
-							setValueAndHeight={(newValue, newHeight) => {
-								const newControl = { ...child };
-								newControl.content = newValue;
-								newControl.renderHeight = newHeight ?? child.renderHeight;
-								children[idx] = newControl;
-								setValue(children);
-							}}
-							pickUpControl={pickUpControl}
-							setSelectedField={setSelectedField}
-							sliderOffset={0}
-							onSliderGrab={() => {}}
-						/>
+						<Fragment key={child.uuid}>
+							<ControlElement
+								restrict={restrict}
+								index={idx}
+								leftPad={32 + leftPad}
+								deleteControl={() => {
+									const updatedChildren = children.filter(
+										(c) => c.uuid !== child.uuid
+									);
+									setValue(updatedChildren);
+								}}
+								node={child}
+								nodeTable={nodeTable}
+								windowWidth={windowWidth}
+								setLabel={(newLabel) => {
+									const newControl = { ...child };
+									newControl.label = newLabel;
+									children[idx] = newControl;
+									setValue(children);
+								}}
+								setValueAndHeight={(newValue, newHeight) => {
+									const newControl = { ...child };
+									newControl.content = newValue;
+									newControl.renderHeight = newHeight ?? child.renderHeight;
+									children[idx] = newControl;
+									setValue(children);
+								}}
+								pickUpControl={pickUpControl}
+								setSelectedField={setSelectedField}
+								sliderOffset={0}
+								onSliderGrab={() => {}}
+							/>
+							{restrict && (
+								<CompositeRestrictionControl
+									node={child}
+									updateNode={(newNode) => {
+										const newControl = { ...child };
+										newControl.restrictionIdentifier =
+											newNode.restrictionIdentifier;
+										children[idx] = newControl;
+										setValue(children);
+									}}
+									padding={leftPad}
+								/>
+							)}
+						</Fragment>
 					);
 				})}
 			</div>

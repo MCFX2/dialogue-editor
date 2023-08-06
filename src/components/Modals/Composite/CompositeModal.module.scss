@@ -99,10 +99,62 @@
 	}
 }
 
+.numberRestrictionField {
+	@extend .generalRestrictionField;
+
+	width: 104px;
+}
+
 .generalRestrictionFieldInvalid {
 	@extend .generalRestrictionField;
 
 	background-color: #ff000033;
 
 	color: #cc3300;
+}
+
+.saveButtonContainer {
+	display: flex;
+
+	width: 100%;
+
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.saveButton {
+	width: 200px;
+	height: 32px;
+
+	margin-top: 16px;
+	margin-bottom: 16px;
+	margin-left: 16px;
+	margin-right: 16px;
+
+	border-color: #f7f7f7;
+	border-width: 2px;
+	border-style: solid;
+	border-radius: 4px;
+
+	background-color: #00000000;
+
+	color: #f7f7f7;
+
+	font-family: 'Monocraft';
+	font-size: 16px;
+
+	&:hover {
+		cursor: pointer;
+		background-color: #00000099;
+	}
+
+	&:disabled {
+		background-color: #00000033;
+		color: #c0c0c0;
+
+		border-color: #c0c0c0;
+		border-style: dashed;
+
+		cursor: no-drop;
+	}
 }

@@ -3,6 +3,7 @@
 // It also used to be located entirely within the App.
 
 import { NodeHandle } from "../App";
+import { Composite } from "./Modals/Composite/CompositeModal";
 
 export interface FilesystemState {
 	workspaceHandle?: FileSystemDirectoryHandle;
@@ -11,6 +12,7 @@ export interface FilesystemState {
 
 	currentScreenFile?: FileSystemFileHandle;
 	screenFileList?: FileSystemFileHandle[];
+	compositeFileList?: FileSystemFileHandle[];
 }
 
 // Initializes the workspace if it's not initialized already.
@@ -32,6 +34,17 @@ async function ensureScreenDirectoryInitialized(
 	if (!newState.screenDirectoryHandle) {
 		newState = await loadScreenDirectory(newState);
 		newState = await generateFileList(newState);
+	}
+
+	return newState;
+}
+
+async function ensureCompositeDirectoryInitialized(IOState: Readonly<FilesystemState>) {
+	let newState = IOState;
+	newState = await ensureWorkspaceInitialized(newState);
+
+	if (!newState.compositeDirectoryHandle) {
+		newState = await loadCompositeDirectory(newState);
 	}
 
 	return newState;
@@ -124,6 +137,32 @@ async function generateFileList(IOState: Readonly<FilesystemState>) {
 	const newState = { ...IOState };
 
 	newState.screenFileList = files.sort((a, b) => a.name.localeCompare(b.name));
+
+	return newState;
+}
+
+// Loads/refreshes the composite file list. Does not initialize anything else,
+// and will fail silently if the composite directory isn't initialized.
+async function generateCompositeFileList(IOState: Readonly<FilesystemState>) {
+	console.assert(
+		IOState.compositeDirectoryHandle,
+		"Tried to load file list when composite directory not initialized"
+	);
+
+	if (!IOState.compositeDirectoryHandle) {
+		return IOState;
+	}
+
+	const files: FileSystemFileHandle[] = [];
+	for await (const entry of IOState.compositeDirectoryHandle.values()) {
+		if (entry.kind === "file") {
+			files.push(entry);
+		}
+	}
+
+	const newState = { ...IOState };
+
+	newState.compositeFileList = files.sort((a, b) => a.name.localeCompare(b.name));
 
 	return newState;
 }
@@ -266,4 +305,22 @@ export async function deleteScreen(
 	await newState.screenDirectoryHandle?.removeEntry(name);
 
 	return await generateFileList(newState);
+}
+
+export async function saveComposite(IOState: Readonly<FilesystemState>, name: string, composite: Composite) {
+	let newState = await ensureCompositeDirectoryInitialized(IOState);
+
+	const newHandle = await newState.compositeDirectoryHandle?.getFileHandle(name, {
+		create: true,
+	});
+
+	if (!newHandle) {
+		return newState;
+	}
+
+	const writer = await newHandle.createWritable();
+	await writer.write(JSON.stringify(composite));
+	await writer.close();
+
+	return await generateCompositeFileList(newState);
 }

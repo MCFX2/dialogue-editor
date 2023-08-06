@@ -20,13 +20,15 @@ export interface Composite {
 
 export interface CompositeModalProps {
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
+	saveComposite: (composite: Composite) => void;
 }
 
 export const CompositeModal: FC<CompositeModalProps> = ({
 	setSelectedField,
+	saveComposite,
 }) => {
 	const [currentComposite, setCurrentComposite] = useState<Composite>({
-		name: { ...DefaultTextControl, label: "Composite Name" },
+		name: { ...DefaultTextControl, label: "Composite Name", uuid:"#newCompositeControl" },
 		fields: {},
 	});
 
@@ -67,7 +69,9 @@ export const CompositeModal: FC<CompositeModalProps> = ({
 	const height =
 		recursiveCalculateRestrictorHeight(controlArray, 9999) +
 		recursiveCalculateHeight(controlArray, 9999) +
-		148;
+		198;
+
+	let valid = true;
 
 	return (
 		<ResizableWindow
@@ -102,9 +106,22 @@ export const CompositeModal: FC<CompositeModalProps> = ({
 				}}
 			/>
 			{Object.keys(currentComposite.fields).map((key) => {
+				const isInvalid =
+					currentComposite.fields[key].label === "" ||
+					controlArray.find(
+						(c) =>
+							c.label === currentComposite.fields[key].label &&
+							c.uuid !== currentComposite.fields[key].uuid
+					) !== undefined;
+
+				if (isInvalid) {
+					valid = false;
+				}
+
 				return (
 					<Fragment key={key}>
 						<ControlElement
+							restrict
 							windowWidth={windowWidth}
 							nodeTable={{}}
 							onSliderGrab={(e) => setGrabbingFrom(e.clientX)}
@@ -144,14 +161,7 @@ export const CompositeModal: FC<CompositeModalProps> = ({
 								});
 							}}
 							node={currentComposite.fields[key]}
-							invalid={
-								currentComposite.fields[key].label === "" ||
-								controlArray.find(
-									(c) =>
-										c.label === currentComposite.fields[key].label &&
-										c.uuid !== currentComposite.fields[key].uuid
-								) !== undefined
-							}
+							invalid={isInvalid}
 						/>
 						<CompositeRestrictionControl
 							node={currentComposite.fields[key]}
@@ -183,6 +193,15 @@ export const CompositeModal: FC<CompositeModalProps> = ({
 					});
 				}}
 			/>
+			<div className={styles.saveButtonContainer}>
+				<button
+					className={styles.saveButton}
+					disabled={!valid}
+					onClick={() => saveComposite(currentComposite)}
+				>
+					Save Composite
+				</button>
+			</div>
 		</ResizableWindow>
 	);
 };

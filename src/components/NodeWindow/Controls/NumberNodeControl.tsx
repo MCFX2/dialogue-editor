@@ -1,7 +1,7 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import { NodeControl } from "../NodeControl";
 import styles from "./Controls.module.scss";
-import { restrictNumber, sanitizeNumber } from "./Sanitize";
+import { extractArguments, restrictNumber, sanitizeNumber } from "./Sanitize";
 
 export const DefaultNumberControl: NodeControl = {
 	type: "number",
@@ -43,17 +43,27 @@ export const NumberNodeControl: FC<NumberNodeControlProps> = ({
 	controlWidth,
 	setSelectedField,
 }) => {
-	return (
+	const [curValue, setCurValue] = useState<string | null>(value);
+
+	const args = extractArguments(restriction);
+	const allowEdit = args["disabled"] !== "true";
+	const isInt = args["preset"] === "int";
+	const minValue = args["minValue"];
+	const maxValue = args["maxValue"];
+
+	const trueMinValue = minValue ? parseFloat(minValue) : -Infinity;
+
+	const allowNegative = minValue ? parseFloat(minValue) < 0 : true;
+
+
+	return allowEdit ? (
 		<input
 			className={styles.numberField}
 			placeholder="0"
-			value={value ?? ""}
+			value={curValue ?? value}
 			onChange={(e) => {
-				if (restriction?.includes("preset:int,")) {
-					setValue(restrictNumber(e.target.value, true, false));
-				} else {
-					setValue(restrictNumber(e.target.value, true, true));
-				}
+				let newValue = restrictNumber(e.target.value, allowNegative, !isInt);
+				setCurValue(newValue);
 				e.preventDefault();
 			}}
 			type={"text"}
@@ -64,9 +74,28 @@ export const NumberNodeControl: FC<NumberNodeControlProps> = ({
 				setSelectedField(true);
 			}}
 			onBlur={() => {
-				setValue(sanitizeNumber(value));
+				if (curValue !== null && curValue !== '') {
+					let newValue = sanitizeNumber(curValue);
+					newValue = Math.max(parseFloat(newValue), trueMinValue).toString();
+	
+					if (maxValue) {
+						newValue = Math.min(parseFloat(newValue), parseFloat(maxValue)).toString();
+					}
+					setValue(newValue);
+				} else {
+					setValue('');
+				}
+
+				setCurValue(null);
 				setSelectedField(false);
 			}}
 		/>
+	) : (
+		<p
+			className={styles.textFieldUneditable}
+			style={{ width: `${controlWidth - 16}px` }}
+		>
+			{value}
+		</p>
 	);
 };

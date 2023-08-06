@@ -14,6 +14,7 @@ import {
 	FilesystemState,
 	initWorkspace,
 	renameScreen,
+	saveComposite,
 	saveScreen,
 } from "./components/FileIO";
 import { Modal } from "./components/Modals/Modal";
@@ -50,8 +51,6 @@ function App() {
 	const [currentModal, setCurrentModal] = useState<"composite" | undefined>(
 		undefined
 	);
-
-	const [currentModalPreset, setCurrentModalPreset] = useState<any>(undefined);
 
 	// keep track of whether the user is typing in a text field
 	// so we can disable keyboard shortcuts
@@ -354,7 +353,9 @@ function App() {
 					renameScreen={async (oldName, newName) => {
 						setIOState(await renameScreen(IOState, oldName, newName));
 					}}
-					suppressKeyboardShortcuts={selectedField !== ""}
+					suppressKeyboardShortcuts={
+						currentModal !== undefined || selectedField !== ""
+					}
 				/>
 				<Canvas
 					cameraPosition={cameraPosition}
@@ -458,7 +459,17 @@ function App() {
 				</div>
 				{currentModal && (
 					<Modal closeModal={() => setCurrentModal(undefined)}>
-						{currentModal === "composite" ? <CompositeModal setSelectedField={updateSelectedField} /> : undefined}
+						{currentModal === "composite" ? (
+							<CompositeModal
+								setSelectedField={updateSelectedField}
+								saveComposite={async (c) => {
+									setIOState(
+										await saveComposite(IOState, c.name.content + ".json", c)
+									);
+									setCurrentModal(undefined);
+								}}
+							/>
+						) : undefined}
 					</Modal>
 				)}
 			</div>

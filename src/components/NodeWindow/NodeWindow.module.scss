@@ -88,6 +88,12 @@
 	border-radius: 4px;
 
 	user-select: none;
+
+	&:hover
+	{
+		background-color: #000000aa;
+		cursor: pointer;
+	}
 }
 
 .searchBar
@@ -155,6 +161,8 @@
 	&:hover
 	{
 		background-color: #88888888;
+
+		cursor: pointer;
 	}
 
 }

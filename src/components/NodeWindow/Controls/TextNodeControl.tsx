@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC } from "react";
 import { NodeControl } from "../NodeControl";
 import styles from "./Controls.module.scss";
 import { extractArguments } from "./Sanitize";
@@ -73,7 +73,7 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 		<p
 			className={styles.textFieldUneditable}
 			style={{
-				width: `${controlWidth - 16}px}`,
+				width: `${controlWidth - 16}px`,
 			}}
 		>
 			{value}
