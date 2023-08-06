@@ -192,6 +192,7 @@
 
 	border-top: 1px solid #444444dd;
 
+	height: 50px;
 
 	&:hover {
 		color: #000;
@@ -223,8 +224,12 @@
 .filenameField {
 	@extend .generalControl;
 
-	height: 32px;
+	height: 28px;
 	width: 120px;
+	
+	margin-top: 0px;
+
+	font-size: 16px;
 
 	text-shadow: 1px 1px 1px #000;
 }

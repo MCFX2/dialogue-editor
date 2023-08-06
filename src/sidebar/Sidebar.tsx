@@ -8,7 +8,7 @@ import {
 	// import sidebar library to make life easier. end up having to rip out half the functionality and do it myself anyway. classic
 } from "react-pro-sidebar";
 import styles from "./Sidebar.module.scss";
-import { PlusIcon2 } from "../components/SVG/PlusIcon";
+import { PlusIcon1, PlusIcon2 } from "../components/SVG/PlusIcon";
 import { SaveIcon } from "../components/SVG/SaveIcon";
 import { LoadIcon } from "../components/SVG/LoadIcon";
 import { WindowIcon } from "../components/SVG/WindowIcon";
@@ -31,6 +31,8 @@ export interface SidebarProps {
 	renameScreen: (oldName: string, newName: string) => void;
 
 	suppressKeyboardShortcuts: boolean;
+
+	openCompositeModal: () => void;
 }
 
 interface SidebarHeadingProps {
@@ -74,6 +76,7 @@ export const AppSidebar: FC<SidebarProps> = ({
 	setSelectedField,
 	renameScreen,
 	suppressKeyboardShortcuts,
+	openCompositeModal,
 }) => {
 	const [collapsed, setCollapsed] = useState(false);
 	const [filenameSelected, setFilenameSelected] = useState(-2);
@@ -183,11 +186,11 @@ export const AppSidebar: FC<SidebarProps> = ({
 												) : (
 													<input
 														onClick={(e) => e.stopPropagation()}
-														onFocus={(e) => {
+														onFocus={() => {
 															setSelectedField(idx + "#screenNameField");
 															setFilenameSelected(idx);
 														}}
-														onBlur={(e) => {
+														onBlur={() => {
 															setSelectedField("", idx + "#screenNameField");
 															setFilenameSelected(-2);
 
@@ -215,11 +218,11 @@ export const AppSidebar: FC<SidebarProps> = ({
 											<input
 												className={styles.filenameField}
 												autoFocus={true}
-												onFocus={(e) => {
+												onFocus={() => {
 													setSelectedField("#newScreenField");
 													setFilenameSelected(-1);
 												}}
-												onBlur={(e) => {
+												onBlur={() => {
 													if (
 														editedFilename !== undefined &&
 														editedFilename !== ""
@@ -256,7 +259,13 @@ export const AppSidebar: FC<SidebarProps> = ({
 							>
 								New Node (Shift+E)
 							</MenuItem>
-							<MenuItem>Random Button That Does Nothing</MenuItem>
+							<MenuItem
+								icon={<PlusIcon1 size={32} />}
+								onClick={openCompositeModal}
+								className={styles.mainMenuButton}
+							>
+								New Composite
+							</MenuItem>
 						</Menu>
 					</div>
 					<div
@@ -284,12 +293,12 @@ export const AppSidebar: FC<SidebarProps> = ({
 					</div>
 					{collapsed ? (
 						<div className={styles.legalText}>
-							v0.4
+							v0.5-alpha
 							<p>EVALUATION</p>
 						</div>
 					) : (
 						<div className={styles.legalText}>
-							v0.4 (c) 2023 Rozalily
+							v0.5-alpha (c) 2023 Rozalily
 							<p>For evaluation purposes only.</p>
 						</div>
 					)}

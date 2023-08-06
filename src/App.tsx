@@ -18,6 +18,7 @@ import {
 } from "./components/FileIO";
 import { Modal } from "./components/Modals/Modal";
 import { Background } from "./components/Background/Background";
+import { CompositeModal } from "./components/Modals/Composite/CompositeModal";
 
 export interface NodeHandle {
 	name: string;
@@ -45,6 +46,12 @@ function App() {
 	const [IOState, setIOState] = useState<FilesystemState>({});
 
 	const [unsaved, setUnsaved] = useState(false);
+
+	const [currentModal, setCurrentModal] = useState<"composite" | undefined>(
+		undefined
+	);
+
+	const [currentModalPreset, setCurrentModalPreset] = useState<any>(undefined);
 
 	// keep track of whether the user is typing in a text field
 	// so we can disable keyboard shortcuts
@@ -299,6 +306,17 @@ function App() {
 
 	const fieldRef = useRef<HTMLDivElement>(null);
 
+	const updateSelectedField = (uuid: string, oldUuid?: string) => {
+		if (oldUuid !== undefined) {
+			// we're done typing
+			if (selectedField === oldUuid) {
+				setSelectedField("");
+			}
+		} else {
+			setSelectedField(uuid);
+		}
+	};
+
 	return (
 		<>
 			<title>
@@ -313,6 +331,9 @@ function App() {
 				<AppSidebar
 					createScreen={createScreen}
 					createNewNode={makeNode}
+					openCompositeModal={() => {
+						setCurrentModal("composite");
+					}}
 					loadWorkspace={async () => {
 						try {
 							setIOState(await initWorkspace(IOState));
@@ -329,16 +350,7 @@ function App() {
 					loadScreen={(filename) => {
 						loadScreen(filename);
 					}}
-					setSelectedField={(uuid, oldUuid) => {
-						if (oldUuid !== undefined) {
-							// we're done typing
-							if (selectedField === oldUuid) {
-								setSelectedField("");
-							}
-						} else {
-							setSelectedField(uuid);
-						}
-					}}
+					setSelectedField={updateSelectedField}
 					renameScreen={async (oldName, newName) => {
 						setIOState(await renameScreen(IOState, oldName, newName));
 					}}
@@ -356,12 +368,7 @@ function App() {
 						if (e.target === e.currentTarget && e.button === 0)
 							setGrabbing(true);
 					}}
-					onScroll={(e) => {
-						//console.log("scroll");
-						//e.preventDefault();
-						//e.stopPropagation();
-						window.scrollTo(0, 0);
-						
+					onScroll={() => {
 						if (fieldRef.current) {
 							fieldRef.current.scrollLeft = 0;
 							fieldRef.current.scrollTop = 0;
@@ -444,20 +451,16 @@ function App() {
 										targetNode?.uuid === node.uuid &&
 										draggingControl.parent !== node.uuid
 									}
-									setSelectedField={(uuid, oldUuid) => {
-										if (oldUuid !== undefined) {
-											// we're done typing
-											if (selectedField === oldUuid) {
-												setSelectedField("");
-											}
-										} else {
-											setSelectedField(uuid);
-										}
-									}}
+									setSelectedField={updateSelectedField}
 								/>
 							)
 					)}
 				</div>
+				{currentModal && (
+					<Modal closeModal={() => setCurrentModal(undefined)}>
+						{currentModal === "composite" ? <CompositeModal setSelectedField={updateSelectedField} /> : undefined}
+					</Modal>
+				)}
 			</div>
 		</>
 	);

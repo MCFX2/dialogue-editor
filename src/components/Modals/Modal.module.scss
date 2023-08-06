@@ -13,4 +13,20 @@
   
 	background-color: #00000099;
 
+	cursor: default;
+}
+
+.appXButton {
+	position: absolute;
+	top: 32px;
+	right: 32px;
+  
+	width: 64px;
+	height: 64px;
+    
+	cursor: pointer;
+
+	&:hover {
+		background-color: #ffffff33;
+	}
 }

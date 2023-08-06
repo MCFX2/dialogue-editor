@@ -77,7 +77,6 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 	return (
 		<ResizableWindow
 			allowOutOfBounds={true}
-			allowVerticalResize={false}
 			onWindowMoved={(newPos) => {
 				props.setRenderPosition(newPos);
 			}}

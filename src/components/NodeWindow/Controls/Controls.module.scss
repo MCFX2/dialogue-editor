@@ -89,7 +89,7 @@
 .boolCheckboxContainer
 {
 	display: flex;
-	align-items: start;
+	align-items: flex-start;
 	padding: 1px 2px;
 }
 
@@ -105,6 +105,38 @@
 	margin-right: 16px;
 }
 
+.textFieldInvalid
+{
+	@extend .textField;
+	color: #ee2200;
+
+	&::placeholder
+	{
+		color: #990000;
+	}
+}
+
+.textFieldUneditable
+{
+	height: 100%;
+	display: flex;
+	align-items: center;
+
+	color: #eee;
+	border:none;
+	background-color: #00000000;
+
+	text-overflow: ellipsis;
+
+	user-select: none;
+
+	padding: 0;
+
+	font-family: 'Monocraft';
+
+	margin-right: 16px;
+}
+
 .numberField
 {
 	@extend .generalControl;
@@ -116,6 +148,17 @@
 	@extend .generalControl;
 	margin-right: 16px;
 	margin-left: 16px;
+}
+
+.arrayTitleInvalid
+{
+	@extend .arrayTitle;
+	color: #990000;
+
+	&::placeholder
+	{
+		color: #ee2200;
+	}
 }
 
 .arrayContainer

@@ -3,11 +3,13 @@ import { FC } from "react";
 export interface SquareXIconProps {
 	className?: string;
 	size: number;
+	onClick?: () => void;
 }
 
 export const SquareXIcon: FC<SquareXIconProps> = ({
 	className = undefined,
 	size = 32,
+	onClick = () => {},
 }) => {
 	return (
 		<svg
@@ -19,6 +21,7 @@ export const SquareXIcon: FC<SquareXIconProps> = ({
 			stroke="#ffffff"
 			strokeWidth={0}
 			xmlns="http://www.w3.org/2000/svg"
+			onClick={onClick}
 		>
 			<g clipPath="url(#clip0_429_10964)">
 				<path

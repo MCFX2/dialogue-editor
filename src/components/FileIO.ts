@@ -7,11 +7,39 @@ import { NodeHandle } from "../App";
 export interface FilesystemState {
 	workspaceHandle?: FileSystemDirectoryHandle;
 	screenDirectoryHandle?: FileSystemDirectoryHandle;
+	compositeDirectoryHandle?: FileSystemDirectoryHandle;
 
 	currentScreenFile?: FileSystemFileHandle;
 	screenFileList?: FileSystemFileHandle[];
 }
 
+// Initializes the workspace if it's not initialized already.
+async function ensureWorkspaceInitialized(IOState: Readonly<FilesystemState>) {
+	if (!IOState.workspaceHandle) {
+		return await initWorkspace(IOState);
+	}
+
+	return IOState;
+}
+
+// Initializes the screen directory if it's not initialized already. Initializes the workspace too if necessary.
+async function ensureScreenDirectoryInitialized(
+	IOState: Readonly<FilesystemState>
+) {
+	let newState = IOState;
+	newState = await ensureWorkspaceInitialized(newState);
+
+	if (!newState.screenDirectoryHandle) {
+		newState = await loadScreenDirectory(newState);
+		newState = await generateFileList(newState);
+	}
+
+	return newState;
+}
+
+// Moves a file by copying it and then deleting the old one.
+// This is necessary because the Filesystem API doesn't broadly support moving files yet,
+// and discussions on the spec have been going on for years with no end in sight.
 async function moveViaHandle(
 	directory: FileSystemDirectoryHandle,
 	handle: FileSystemFileHandle,
@@ -36,7 +64,13 @@ async function moveViaHandle(
 	return Promise.reject("Failed to move file");
 }
 
+// Loads the screen directory. Does not initialize anything else,
+// and will fail silently if the workspace isn't initialized.
 async function loadScreenDirectory(IOState: Readonly<FilesystemState>) {
+	console.assert(
+		IOState.workspaceHandle,
+		"Tried to load screen directory when workspace handle not initialized"
+	);
 	if (!IOState.workspaceHandle) {
 		return IOState;
 	}
@@ -51,7 +85,31 @@ async function loadScreenDirectory(IOState: Readonly<FilesystemState>) {
 	return newState;
 }
 
+// Loads the composite directory. Does not initialize anything else,
+// and will fail silently if the workspace isn't initialized.
+async function loadCompositeDirectory(IOState: Readonly<FilesystemState>) {
+	console.assert(IOState.workspaceHandle, "Workspace handle not initialized");
+	if (!IOState.workspaceHandle) {
+		return IOState;
+	}
+
+	const newState = { ...IOState };
+
+	newState.compositeDirectoryHandle =
+		await IOState.workspaceHandle.getDirectoryHandle("composites", {
+			create: true,
+		});
+
+	return newState;
+}
+
+// Loads/refreshes the screen file list. Does not initialize anything else,
+// and will fail silently if the screen directory isn't initialized.
 async function generateFileList(IOState: Readonly<FilesystemState>) {
+	console.assert(
+		IOState.screenDirectoryHandle,
+		"Tried to load file list when screen directory not initialized"
+	);
 	if (!IOState.screenDirectoryHandle) {
 		return IOState;
 	}
@@ -70,6 +128,10 @@ async function generateFileList(IOState: Readonly<FilesystemState>) {
 	return newState;
 }
 
+// Renames a screen. Does not initialize anything else,
+// and will fail silently if the screen directory isn't initialized.
+// Also fails silently if the new name is already in use.
+// Also fails silently if the old screen doesn't exist.
 export async function renameScreen(
 	IOState: Readonly<FilesystemState>,
 	oldName: string,
@@ -80,6 +142,10 @@ export async function renameScreen(
 		return IOState;
 	}
 
+	console.assert(
+		IOState.screenDirectoryHandle,
+		"Tried to rename when screen directory not initialized"
+	);
 	if (!IOState.screenDirectoryHandle) {
 		return IOState;
 	}
@@ -108,6 +174,9 @@ export async function renameScreen(
 	return await generateFileList(newState);
 }
 
+// Initializes the workspace, and all the directories within it.
+// Basically loads everything.
+// If the workspace is already initialized, this will still prompt the user to select a new workspace.
 export async function initWorkspace(
 	IOState: Readonly<FilesystemState>
 ): Promise<FilesystemState> {
@@ -121,41 +190,41 @@ export async function initWorkspace(
 	newState = await loadScreenDirectory(newState);
 	newState = await generateFileList(newState);
 
+	newState = await loadCompositeDirectory(newState);
+
 	return newState;
 }
 
+// Saves a screen to a given file.
+// if the user doesn't currently have a screen loaded, we'll also
+// automatically create a new file and switch the user's current screen to it.
 export async function saveScreen(
 	IOState: Readonly<FilesystemState>,
 	screen: NodeHandle[],
 	defaultFilename: string,
-	newFile?: boolean,
+	newFile?: boolean
 ) {
-	let newState = { ...IOState };
-	let neededInit = false;
-	if (!newState.workspaceHandle) {
-		newState = await initWorkspace(newState);
-		neededInit = true;
-	}
-
-	if (!newState.screenDirectoryHandle) {
-		newState = await loadScreenDirectory(newState);
-		newState = await generateFileList(newState);
-		neededInit = true;
-	}
+	let newState = await ensureScreenDirectoryInitialized(IOState);
 
 	if (!newState.currentScreenFile) {
-		newState.currentScreenFile =
-			await newState.screenDirectoryHandle!.getFileHandle(defaultFilename, {
-				create: true,
-			});
-		
+		newState = {
+			...newState,
+			currentScreenFile: await newState.screenDirectoryHandle!.getFileHandle(
+				defaultFilename,
+				{
+					create: true,
+				}
+			),
+		};
+
 		newState = await generateFileList(newState);
-		
-		neededInit = true;
 	} else if (newFile) {
-		const newHandle = await newState.screenDirectoryHandle?.getFileHandle(defaultFilename, {
-			create: true,
-		});
+		const newHandle = await newState.screenDirectoryHandle?.getFileHandle(
+			defaultFilename,
+			{
+				create: true,
+			}
+		);
 
 		newState = await generateFileList(newState);
 
@@ -170,5 +239,31 @@ export async function saveScreen(
 	await writer.write(JSON.stringify(screen));
 	await writer.close();
 
-	return neededInit ? newState : IOState;
+	return newState;
+}
+
+// Deletes a screen.
+// If the user has the screen loaded, we'll also de-initialize the screen file.
+// Keep in mind, in this case, you'll need to delete the screen contents from the UI yourself.
+// Silently fails if the screen isn't in our file list.
+export async function deleteScreen(
+	IOState: Readonly<FilesystemState>,
+	name: string
+) {
+	const handle = IOState.screenFileList?.find((f) => f.name === name);
+	console.assert(handle, "Tried to delete screen that doesn't exist");
+
+	if (!handle) {
+		return IOState;
+	}
+
+	let newState = { ...IOState };
+
+	if (newState.currentScreenFile?.name === name) {
+		newState.currentScreenFile = undefined;
+	}
+
+	await newState.screenDirectoryHandle?.removeEntry(name);
+
+	return await generateFileList(newState);
 }

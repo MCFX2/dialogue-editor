@@ -1,6 +1,7 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import { NodeControl } from "../NodeControl";
 import styles from "./Controls.module.scss";
+import { extractArguments } from "./Sanitize";
 
 export const DefaultTextControl: NodeControl = {
 	type: "string",
@@ -19,6 +20,7 @@ export interface TextNodeControlProps {
 	setValue: (newValue: string) => void;
 	controlWidth: number;
 	setSelectedField: (selected: boolean) => void;
+	restrictionId?: string;
 }
 
 export const TextNodeControl: FC<TextNodeControlProps> = ({
@@ -26,13 +28,36 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 	setValue,
 	controlWidth,
 	setSelectedField,
+	restrictionId,
 }) => {
-	return (
+	const args = extractArguments(restrictionId);
+
+	let valid = true;
+	if (args["regex"] !== undefined) {
+		const regex = new RegExp(args["regex"]);
+
+		if (!regex.test(value)) {
+			valid = false;
+		}
+	}
+
+	const allowEdit = args["disabled"] !== "true";
+
+	return allowEdit ? (
 		<input
-			className={styles.textField}
+			className={valid ? styles.textField : styles.textFieldInvalid}
 			placeholder='""'
 			value={value ?? ""}
-			onChange={(e) => setValue(e.target.value)}
+			onChange={(e) => {
+				let newValue = e.target.value;
+				if (args["maxLength"] !== undefined) {
+					if (newValue.length > parseInt(args["maxLength"])) {
+						return;
+					}
+				}
+
+				setValue(newValue);
+			}}
 			type={"text"}
 			style={{
 				width: `${controlWidth - 16}px`,
@@ -44,5 +69,14 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 				setSelectedField(false);
 			}}
 		/>
+	) : (
+		<p
+			className={styles.textFieldUneditable}
+			style={{
+				width: `${controlWidth - 16}px}`,
+			}}
+		>
+			{value}
+		</p>
 	);
 };

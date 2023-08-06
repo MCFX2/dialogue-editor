@@ -52,13 +52,14 @@ export interface NodeControl {
 interface ControlHolderProps {
 	onSliderGrab: (e: React.MouseEvent) => void;
 	sliderOffset: number;
-	setText: (text: string) => void;
+	setText?: (text: string) => void;
 	text: string;
-	deleteControl: () => void;
+	deleteControl?: () => void;
 	setSelectedField: (selected: boolean) => void;
 	leftPad?: number;
 	windowWidth: number;
 	index?: number;
+	invalid?: boolean;
 	children: any;
 }
 
@@ -72,6 +73,7 @@ const ControlHolder: FC<ControlHolderProps> = ({
 	leftPad = 0,
 	index,
 	windowWidth,
+	invalid,
 	children,
 }) => {
 	return (
@@ -82,27 +84,29 @@ const ControlHolder: FC<ControlHolderProps> = ({
 				width: `${windowWidth - leftPad}px`,
 			}}
 		>
-			<div className={styles.deleteControlButton} onClick={deleteControl}>
-				<MinusIcon size={32} />
-			</div>
+			{deleteControl && (
+				<div className={styles.deleteControlButton} onClick={deleteControl}>
+					<MinusIcon size={32} />
+				</div>
+			)}
 			{index !== undefined ? (
 				<div
 					className={styles.controlIndex}
 					style={{
-						width: `${16 + sliderOffset}px`,
+						width: `${16 + sliderOffset + (deleteControl ? 0 : 32)}px`,
 					}}
 				>
 					{index}
 				</div>
-			) : (
+			) : setText ? (
 				<input
-					className={styles.controlLabelEditable}
+					className={invalid ? styles.controlLabelEditableInvalid : styles.controlLabelEditable}
 					placeholder="(label)"
 					type="text"
 					value={text}
 					onChange={(e) => setText(e.target.value)}
 					style={{
-						width: `${100 + sliderOffset}px`,
+						width: `${100 + sliderOffset + (deleteControl ? 0 : 32)}px`,
 					}}
 					onFocus={() => {
 						setSelectedField(true);
@@ -111,6 +115,15 @@ const ControlHolder: FC<ControlHolderProps> = ({
 						setSelectedField(false);
 					}}
 				/>
+			) : (
+				<div
+					className={styles.controlLabelUneditable}
+					style={{
+						width: `${100 + sliderOffset + (deleteControl ? 0 : 32)}px`,
+					}}
+				>
+					{text}
+				</div>
 			)}
 			<p
 				className={styles.controlSeparator}
@@ -125,17 +138,18 @@ const ControlHolder: FC<ControlHolderProps> = ({
 
 export interface ControlElementProps {
 	node: NodeControl;
-	setLabel: (label: string) => void;
+	setLabel?: (label: string) => void;
 	setValueAndHeight: (value: any, height?: number) => void;
 	sliderOffset: number;
 	onSliderGrab: (e: React.MouseEvent) => void;
 	windowWidth: number;
 	nodeTable: { [uuid: string]: NodeHandle };
 	pickUpControl: (node: NodeControl) => void;
-	deleteControl: () => void;
+	deleteControl?: () => void;
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
 	leftPad?: number;
 	index?: number;
+	invalid?: boolean;
 }
 
 // generates a JSX element for a primitive control
@@ -151,6 +165,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 	deleteControl,
 	setSelectedField,
 	leftPad = 0,
+	invalid = false,
 	index,
 }) => {
 	const controlWidth =
@@ -159,7 +174,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 	return node.type === "array" ? (
 		<ArrayControl
 			node={node}
-			setLabel={setLabel}
+			setLabel={setLabel ?? (() => {})}
 			deleteControl={deleteControl}
 			setSelectedField={setSelectedField}
 			controlWidth={controlWidth}
@@ -169,6 +184,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 			windowWidth={windowWidth}
 			leftPad={leftPad}
 			index={index}
+			invalid={invalid}
 		/>
 	) : (
 		<ControlHolder
@@ -180,6 +196,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 			text={node.label}
 			deleteControl={deleteControl}
 			windowWidth={windowWidth}
+			invalid={invalid}
 			setSelectedField={(selected) => {
 				setSelectedField(
 					selected ? node.uuid + "#label" : "",
@@ -204,7 +221,8 @@ export const ControlElement: FC<ControlElementProps> = ({
 				<TextNodeControl
 					value={node.content}
 					setValue={setValueAndHeight}
-					controlWidth={controlWidth}
+								controlWidth={controlWidth}
+								restrictionId={node.restrictionIdentifier}
 					setSelectedField={(selected) => {
 						setSelectedField(
 							selected ? node.uuid : "",

@@ -23,7 +23,6 @@ export interface ResizableWindowProps {
 
 	allowOutOfBounds?: boolean;
 
-	allowVerticalResize?: boolean;
 	allowHorizontalResize?: boolean;
 
 	onMouseEnter?: () => void;

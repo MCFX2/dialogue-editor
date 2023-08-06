@@ -27,12 +27,13 @@ export interface ArrayControlProps {
 	windowWidth: number;
 	nodeTable: { [uuid: string]: NodeHandle };
 	pickUpControl: (node: NodeControl) => void;
-	deleteControl: () => void;
+	deleteControl?: () => void;
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
 
 	controlWidth: number;
 	leftPad: number;
 	index?: number;
+	invalid?: boolean;
 }
 
 export const ArrayControl: FC<ArrayControlProps> = ({
@@ -47,6 +48,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 	setSelectedField,
 	leftPad,
 	index,
+	invalid = false,
 }) => {
 	const children = (node.content ?? []) as NodeControl[];
 
@@ -59,18 +61,18 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 					width: `${windowWidth - leftPad}px`,
 				}}
 			>
-				<div className={styles.deleteControlButton} onClick={deleteControl}>
+				{deleteControl && <div className={styles.deleteControlButton} onClick={deleteControl}>
 					<MinusIcon size={32} />
-				</div>
+				</div>}
 				{index === undefined ? (
 					<input
-						className={styles.arrayTitle}
-						placeholder='""'
+						className={invalid ? styles.arrayTitleInvalid : styles.arrayTitle}
+						placeholder='(label)'
 						value={node.label ?? ""}
 						onChange={(e) => setLabel(e.target.value)}
 						type={"text"}
 						style={{
-							width: `${windowWidth - 300 - leftPad / 2 - 48}px`,
+							width: `${windowWidth - 300 - leftPad / 2 - 48 + (deleteControl ? 0 : 32)}px`,
 						}}
 						onFocus={() => {
 							setSelectedField(node.uuid);
@@ -84,7 +86,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 						className={styles.arrayIndex}
 						style={{
 							width: `${
-								index === undefined ? windowWidth - 300 - leftPad / 2 - 48 : 16
+								(index === undefined ? windowWidth - 300 - leftPad / 2 - 48 : 16) + (deleteControl ? 0 : 32)
 							}px`,
 						}}
 					>

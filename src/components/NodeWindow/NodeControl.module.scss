@@ -41,6 +41,8 @@
 
 	padding: 0;
 
+	font-size: 20px;
+
 	font-family: 'Monocraft';
 
 	&:hover
@@ -63,6 +65,40 @@
 .controlLabelEditable
 {
 	@extend .generalControl;
+
+	margin-left: 16px;
+	text-align: right;
+}
+
+.controlLabelEditableInvalid
+{
+	@extend .controlLabelEditable;
+
+	color: #ee2200;
+
+	&::placeholder
+	{
+		color: #ee2200;
+	}
+}
+
+.controlLabelUneditable
+{
+	height: 100%;
+	display: flex;
+	align-items: center;
+
+	color: #eee;
+	border:none;
+	background-color: #00000000;
+
+	text-overflow: ellipsis;
+
+	user-select: none;
+
+	padding: 0;
+
+	font-family: 'Monocraft';
 
 	margin-left: 16px;
 	text-align: right;

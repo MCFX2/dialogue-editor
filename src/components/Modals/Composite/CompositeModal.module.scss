@@ -1,0 +1,108 @@
+.compositeModalTitle {
+	color: #f7f7f7;
+	font-size: 24px;
+
+	background-color: transparent;
+	border-color: transparent;
+	user-select: none;
+
+	font-family: 'Monocraft';
+	text-overflow: ellipsis;
+
+	text-shadow: black 2px 2px 4px;
+
+	align-self: center;
+	display: flex;
+
+	flex-grow: 1;
+
+	margin-left: 8px;
+
+	min-width: 80px;
+}
+
+.restrictionContainer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	width: auto;
+	height: auto;
+
+	margin-top: 8px;
+
+	margin-left: 32px;
+	margin-right: 32px;
+
+	border-style: solid;
+	border-color: #c0c0c0;
+	border-width: 1px;
+}
+
+.generalRestriction {
+	user-select: none;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+
+	width: auto;
+	height: 32px;
+
+	margin-left: 8px;
+	margin-right: 8px;
+
+	color: #f7f7f7;
+
+	font-family: 'Monocraft';
+	font-size: 16px;
+}
+
+.generalRestrictionLabel {
+	width: 280px;
+
+	color: #c0c0c0;
+}
+
+.toggleCheckbox
+{
+	width: 24px;
+	height: 24px;
+
+	margin-left: 32px;
+
+	border-color: #f7f7f7;
+	border-width: 2px;
+	border-style: solid;
+	border-radius: 4px;
+
+	background-color: #00000000;
+
+	&:hover {
+		cursor: pointer;
+	}
+}
+
+.generalRestrictionField {
+	background-color: #00000033;
+
+	color: white;
+
+	font-family: 'Monocraft';
+
+	height: 24px;
+
+	&:hover {
+		cursor: text;
+		background-color: #00000099;
+	}
+}
+
+.generalRestrictionFieldInvalid {
+	@extend .generalRestrictionField;
+
+	background-color: #ff000033;
+
+	color: #cc3300;
+}
