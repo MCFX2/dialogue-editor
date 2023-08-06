@@ -1,12 +1,18 @@
 import { FC, useState } from "react";
-import { extractArguments, packArguments, restrictNumber, sanitizeNumber } from "../../../NodeWindow/Controls/Sanitize";
-import styles from '../CompositeModal.module.scss';
+import {
+	extractArguments,
+	packArguments,
+	restrictNumber,
+	sanitizeNumber,
+} from "../../../NodeWindow/Controls/Sanitize";
+import styles from "../CompositeModal.module.scss";
 import { GeneralRestrictionControl } from "./GeneralRestrictionControl";
 import { RestrictionControlProps } from "../CompositeRestrictionControl";
 
 export const TextRestrictionControl: FC<RestrictionControlProps> = ({
 	node,
 	updateNode,
+	controlCandidates,
 }) => {
 	const [maxLength, setMaxLength] = useState("");
 	const [regex, setRegex] = useState("");
@@ -81,6 +87,7 @@ export const TextRestrictionControl: FC<RestrictionControlProps> = ({
 			<GeneralRestrictionControl
 				node={node}
 				updateNode={updateNode}
+				controlCandidates={controlCandidates}
 			/>
 		</>
 	);

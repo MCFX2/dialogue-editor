@@ -1,5 +1,5 @@
 import { FC, Fragment } from "react";
-import { ControlElement, DefaultControls, NodeControl } from "../NodeControl";
+import { ControlElement, NodeControl } from "../NodeControl";
 import { NodeHandle } from "../../../App";
 import styles from "./Controls.module.scss";
 import { MinusIcon } from "../../SVG/MinusIcon";
@@ -32,6 +32,8 @@ export interface ArrayControlProps {
 	deleteControl?: () => void;
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
 
+	controlCandidates: NodeControl[];
+
 	controlWidth: number;
 	leftPad: number;
 	index?: number;
@@ -49,6 +51,9 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 	pickUpControl,
 	deleteControl,
 	setSelectedField,
+
+	controlCandidates,
+
 	leftPad,
 	index,
 	invalid = false,
@@ -63,9 +68,8 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 
 	const restrictTypeArg = args["type"];
 	const restrictType = restrictTypeArg
-		? DefaultControls.find((c) => {
+		? controlCandidates.find((c) => {
 				if (c.type === "number") {
-					console.log(c.restrictionIdentifier);
 					if (
 						restrictTypeArg === "number|float" &&
 						(c.restrictionIdentifier === "" ||
@@ -80,6 +84,9 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 						return true;
 					}
 					return false;
+				}
+				if (c.type === "composite") {
+					return c.humanName === restrictTypeArg;
 				}
 				return c.type === restrictTypeArg;
 		  })
@@ -167,6 +174,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 						(maxLength ? ` (${children.length}/${maxLength})` : "")
 					}
 					forcedControl={restrictType}
+					controlCandidates={controlCandidates}
 				/>
 			</div>
 			<div className={styles.arrayContainer}>
@@ -174,6 +182,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 					return (
 						<Fragment key={child.uuid}>
 							<ControlElement
+								controlCandidates={controlCandidates}
 								restrict={restrict}
 								index={idx}
 								leftPad={32 + leftPad}
@@ -206,6 +215,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 							/>
 							{restrict && (
 								<CompositeRestrictionControl
+									controlCandidates={controlCandidates}
 									node={child}
 									updateNode={(newNode) => {
 										const newControl = { ...child };

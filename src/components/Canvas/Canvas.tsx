@@ -83,7 +83,7 @@ export const Canvas: FC<CanvasProps> = ({
 
 			ctx.lineWidth = 4;
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+			
 			for (const control of nodeConnections) {
 				if (control.type === "node" && control.content) {
 					const parent = nodes[control.parent];

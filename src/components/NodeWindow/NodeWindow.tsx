@@ -15,12 +15,19 @@ export const recursiveCalculateHeight = (
 ): number => {
 	return control.reduce<number>((prev, cur) => {
 		if (cur.index > stopIndex) return prev;
-		if (cur.type === "array")
+		if (cur.type === "array") {
 			return (
 				prev +
 				cur.renderHeight +
 				recursiveCalculateHeight(cur.content, stopIndex)
 			);
+		} else if (cur.type === "composite") {
+			return (
+				prev +
+				cur.renderHeight +
+				recursiveCalculateHeight(Object.values(cur.content), stopIndex)
+			);
+		}
 		return prev + cur.renderHeight;
 	}, 0);
 };
@@ -41,9 +48,34 @@ export interface NodeWindowProps {
 	isSelected: boolean;
 	deleteNode: () => void;
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
+	controlCandidates: NodeControl[];
 }
 
-export const NodeWindow: FC<NodeWindowProps> = (props) => {
+export const NodeWindow: FC<NodeWindowProps> = ({
+	renderPosition,
+	setRenderPosition,
+
+	title,
+	setTitle,
+
+	controls,
+	controlCandidates,
+	addControl,
+	updateControl,
+	removeControl,
+
+	width,
+	setWidth,
+
+	nodeTable,
+	pickUpControl,
+
+	isSelected,
+
+	deleteNode,
+
+	setSelectedField,
+}) => {
 	const [grabbingFrom, setGrabbingFrom] = useState<number | undefined>(
 		undefined
 	);
@@ -66,87 +98,91 @@ export const NodeWindow: FC<NodeWindowProps> = (props) => {
 			// yay
 			setGrabbingFrom(e.clientX);
 			setReqSliderPos(newSliderPos);
-			if (newSliderPos > -36 && newSliderPos < (props.width - 260)) {
+			if (newSliderPos > -36 && newSliderPos < width - 260) {
 				setSliderPos(newSliderPos);
 			}
 		}
 	});
 
-	const combinedControlHeight = props.controls ? recursiveCalculateHeight(props.controls, 9999) : 0;
-	
+	const combinedControlHeight = controls
+		? recursiveCalculateHeight(controls, 9999)
+		: 0;
+
 	return (
 		<ResizableWindow
 			allowOutOfBounds={true}
 			onWindowMoved={(newPos) => {
-				props.setRenderPosition(newPos);
+				setRenderPosition(newPos);
 			}}
-			forcedPositionX={props.renderPosition.x}
-			forcedPositionY={props.renderPosition.y}
+			forcedPositionX={renderPosition.x}
+			forcedPositionY={renderPosition.y}
 			ignoreWindowResize={true}
 			minWidth={400}
 			defaultWidth={400}
-			defaultXPos={props.renderPosition.x}
-			defaultYPos={props.renderPosition.y}
+			defaultXPos={renderPosition.x}
+			defaultYPos={renderPosition.y}
 			forcedHeight={combinedControlHeight + 96}
-			forcedWidth={props.width}
-			showHighlight={props.isSelected}
+			forcedWidth={width}
+			showHighlight={isSelected}
 			titlebarChildren={
-				props.title === undefined ? undefined : (
+				title === undefined ? undefined : (
 					<>
 						<input
 							className={styles.nodeWindowTitle}
-							value={props.title}
-							onChange={(e) => props.setTitle(e.target.value)}
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
 							placeholder="(untitled)"
 							onFocus={() => {
-								props.setSelectedField('#nodeWindowTitleField');
+								setSelectedField("#nodeWindowTitleField");
 							}}
 							onBlur={() => {
-								props.setSelectedField('', '#nodeWindowTitleField');
+								setSelectedField("", "#nodeWindowTitleField");
 							}}
 						/>
 						<div className={styles.nodeWindowSafeMiddle} />
 						<div className={styles.compositeButton}>
 							<WindowPlusIcon size={32} />
 						</div>
-						<div className={styles.deleteButton} onClick={props.deleteNode}>
+						<div className={styles.deleteButton} onClick={deleteNode}>
 							<SquareXIcon size={32} />
 						</div>
 					</>
 				)
 			}
 			onSizeChange={(newSize) => {
-				props.setWidth(newSize.x);
+				setWidth(newSize.x);
 			}}
 		>
-			{props.controls?.map((control) => (
+			{controls?.map((control) => (
 				<ControlElement
+					controlCandidates={controlCandidates}
 					key={control.uuid}
 					node={control}
-					nodeTable={props.nodeTable}
-					windowWidth={props.width}
+					nodeTable={nodeTable}
+					windowWidth={width}
 					sliderOffset={sliderPos}
 					onSliderGrab={(e) => setGrabbingFrom(e.clientX)}
 					setLabel={(newLabel) => {
 						const newControl = { ...control };
 						newControl.label = newLabel;
-						props.updateControl(control.uuid, newControl);
+						updateControl(control.uuid, newControl);
 					}}
 					setValueAndHeight={(newValue, newHeight) => {
 						const newControl = { ...control };
 						newControl.content = newValue;
 						newControl.renderHeight = newHeight ?? control.renderHeight;
-						props.updateControl(control.uuid, newControl);
+						updateControl(control.uuid, newControl);
 					}}
-					pickUpControl={props.pickUpControl}
-					deleteControl={() => props.removeControl(control.uuid)}
-					setSelectedField={props.setSelectedField}
+					pickUpControl={pickUpControl}
+					deleteControl={() => removeControl(control.uuid)}
+					setSelectedField={setSelectedField}
 				/>
 			))}
 			<AddControlButton
-				addControl={props.addControl}
-				setSelectedField={props.setSelectedField}
-				controls={props.controls}
+				controlCandidates={controlCandidates}
+				addControl={addControl}
+				setSelectedField={setSelectedField}
+				controls={controls}
 			/>
 		</ResizableWindow>
 	);

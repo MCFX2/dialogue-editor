@@ -7,7 +7,10 @@ import {
 	NodeWindow,
 	recursiveCalculateHeight,
 } from "./components/NodeWindow/NodeWindow";
-import { NodeControl } from "./components/NodeWindow/NodeControl";
+import {
+	DefaultControls,
+	NodeControl,
+} from "./components/NodeWindow/NodeControl";
 import * as uuid from "uuid";
 import { Canvas } from "./components/Canvas/Canvas";
 import {
@@ -20,6 +23,7 @@ import {
 import { Modal } from "./components/Modals/Modal";
 import { Background } from "./components/Background/Background";
 import { CompositeModal } from "./components/Modals/Composite/CompositeModal";
+import { DefaultCompositeControl } from "./components/NodeWindow/Controls/CompositeControl";
 
 export interface NodeHandle {
 	name: string;
@@ -51,6 +55,8 @@ function App() {
 	const [currentModal, setCurrentModal] = useState<"composite" | undefined>(
 		undefined
 	);
+
+	const [screen, updateScreen] = useState<NodeHandle[]>([]);
 
 	// keep track of whether the user is typing in a text field
 	// so we can disable keyboard shortcuts
@@ -125,8 +131,6 @@ function App() {
 		setDraggingControl(node);
 		grabbing && setGrabbing(false);
 	};
-
-	const [screen, updateScreen] = useState<NodeHandle[]>([]);
 
 	const makeNode = (screenPosition: { x: number; y: number }) => {
 		!unsaved && setUnsaved(true);
@@ -240,25 +244,34 @@ function App() {
 		{}
 	);
 
-	const getArrayNodeControls: (node: NodeControl) => NodeControl[] = (
+	const getDraggableNodeControls: (node: NodeControl) => NodeControl[] = (
 		node: NodeControl
 	) => {
 		if (node.type === "node") return [node];
 
-		if (node.type !== "array") return [];
+		if (node.type === "array") {
+			return (node.content as NodeControl[]).reduce<NodeControl[]>(
+				(prev, cur) => {
+					return [...prev, ...getDraggableNodeControls(cur)];
+				},
+				[]
+			);
+		}
 
-		return (node.content as NodeControl[]).reduce<NodeControl[]>(
-			(prev, cur) => {
-				return [...prev, ...getArrayNodeControls(cur)];
-			},
-			[]
-		);
+		if (node.type === "composite") {
+			return Object.values(node.content as { [key: string]: NodeControl }).reduce <
+				NodeControl[]
+				>((prev, cur) => {
+					return [...prev, ...getDraggableNodeControls(cur)];
+				}, []);
+		}
+	
+		return [];
 	};
-
 	const getAllDraggableNodeControls = (node: NodeHandle) => {
 		return node.controls.reduce<NodeControl[]>((prev, cur) => {
-			if (cur.type === "array") {
-				return [...prev, ...getArrayNodeControls(cur)];
+			if (cur.type === "array" || cur.type === "composite") {
+				return [...prev, ...getDraggableNodeControls(cur)];
 			} else if (cur.type === "node") {
 				return [...prev, cur];
 			} else {
@@ -267,11 +280,34 @@ function App() {
 		}, []);
 	};
 
+	const recursiveSetParent = (node: NodeControl, parent: string) => {
+		node.parent = parent;
+		if (node.type === "array") {
+			for (const control of node.content as NodeControl[]) {
+				recursiveSetParent(control, parent);
+			}
+		} else if (node.type === "composite") {
+			const fields = node.content as { [key: string]: NodeControl };
+			for (const key of Object.keys(fields)) {
+				const control = fields[key];
+				recursiveSetParent(control, parent);
+			}
+		}
+	};
+
 	const recursiveCalculateIndices = (node: NodeControl, startIdx: number) => {
 		if (node.type === "array") {
 			for (const control of node.content as NodeControl[]) {
 				control.index = startIdx++;
-				if (control.type === "array") {
+				if (control.type === "array" || control.type === "composite") {
+					startIdx = recursiveCalculateIndices(control, startIdx);
+				}
+			}
+		} else if (node.type === "composite") {
+			const fields = node.content as { [key: string]: NodeControl };
+			for (const control of Object.values(fields)) {
+				control.index = startIdx++;
+				if (control.type === "array" || control.type === "composite") {
 					startIdx = recursiveCalculateIndices(control, startIdx);
 				}
 			}
@@ -283,7 +319,7 @@ function App() {
 		let idx = 0;
 		for (const control of node.controls) {
 			control.index = idx++;
-			if (control.type === "array") {
+			if (control.type === "array" || control.type === "composite") {
 				idx = recursiveCalculateIndices(control, idx);
 			}
 		}
@@ -315,6 +351,17 @@ function App() {
 			setSelectedField(uuid);
 		}
 	};
+
+	const controlCandidates = [
+		...DefaultControls,
+		...(IOState.compositeList?.map((c) => {
+			return {
+				...DefaultCompositeControl,
+				content: c.fields,
+				humanName: c.name.content,
+			} as NodeControl;
+		}) ?? []),
+	];
 
 	return (
 		<>
@@ -381,11 +428,18 @@ function App() {
 						(node) =>
 							isNodeVisible(node) && (
 								<NodeWindow
+									controlCandidates={controlCandidates}
 									key={node.uuid}
 									addControl={(control) => {
 										const newControl = { ...control };
 										newControl.uuid = uuid.v4();
-										newControl.parent = node.uuid;
+										console.log(
+											"setting parent to " +
+												node.uuid +
+												" for " +
+												newControl.uuid
+										);
+										recursiveSetParent(newControl, node.uuid);
 										node.controls.push(newControl);
 										recalculateIndices(node);
 										!unsaved && setUnsaved(true);
@@ -461,6 +515,7 @@ function App() {
 					<Modal closeModal={() => setCurrentModal(undefined)}>
 						{currentModal === "composite" ? (
 							<CompositeModal
+								controlCandidates={controlCandidates}
 								setSelectedField={updateSelectedField}
 								saveComposite={async (c) => {
 									setIOState(

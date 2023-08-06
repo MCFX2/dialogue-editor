@@ -1,11 +1,12 @@
 import { FC, useState } from "react";
 import { SearchList } from "./SearchList";
-import { DefaultControls, NodeControl } from "./NodeControl";
+import { NodeControl } from "./NodeControl";
 import styles from "./NodeWindow.module.scss";
 
 export interface AddControlButtonProps {
 	addControl: (control: NodeControl) => void;
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
+	controlCandidates: NodeControl[];
 	controls?: NodeControl[];
 
 	style?: React.CSSProperties;
@@ -19,6 +20,7 @@ export interface AddControlButtonProps {
 export const AddControlButton: FC<AddControlButtonProps> = ({
 	addControl,
 	setSelectedField,
+	controlCandidates,
 	controls,
 	style,
 	buttonStyle,
@@ -37,10 +39,7 @@ export const AddControlButton: FC<AddControlButtonProps> = ({
 	};
 
 	const submitControl = (control: NodeControl) => {
-		const newControl = { ...control };
-		if (newControl.type === "array") {
-			newControl.content = [];
-		}
+		const newControl = JSON.parse(JSON.stringify(control));
 		addControl(newControl);
 	};
 
@@ -65,7 +64,7 @@ export const AddControlButton: FC<AddControlButtonProps> = ({
 							submitControl(c);
 						}}
 						searchText={searchText}
-						controlCandidates={DefaultControls}
+						controlCandidates={controlCandidates}
 					/>
 				</>
 			) : (

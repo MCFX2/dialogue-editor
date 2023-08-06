@@ -10,11 +10,13 @@ export interface CompositeRestrictionControlProps {
 	node: NodeControl;
 	updateNode: (node: NodeControl) => void;
 	padding?: number;
+	controlCandidates: NodeControl[];
 }
 
 export interface RestrictionControlProps {
 	node: NodeControl;
 	updateNode: (node: NodeControl) => void;
+	controlCandidates: NodeControl[];
 }
 
 const restrictionTable: { [type: string]: FC<RestrictionControlProps> } = {
@@ -47,7 +49,7 @@ const generalRestrictionHeight = 40;
 const restrictionHeightTable: { [type: string]: number } = {
 	string: generalRestrictionHeight + 64,
 	number: generalRestrictionHeight + 32,
-	array: 64,
+	array: 74,
 	boolean: generalRestrictionHeight,
 	node: 0,
 	composite: generalRestrictionHeight,
@@ -55,7 +57,7 @@ const restrictionHeightTable: { [type: string]: number } = {
 
 export const CompositeRestrictionControl: FC<
 	CompositeRestrictionControlProps
-> = ({ node, updateNode, padding = 0 }) => {
+> = ({ node, updateNode, padding = 0, controlCandidates }) => {
 	if (node.type === "node") return <></>;
 
 	return (
@@ -64,7 +66,7 @@ export const CompositeRestrictionControl: FC<
 			style={{ marginLeft: `${32 + padding}px` }}
 		>
 			{restrictionTable.hasOwnProperty(node.type)
-				? restrictionTable[node.type]({ node, updateNode })
+				? restrictionTable[node.type]({ node, updateNode, controlCandidates })
 				: "UNKNOWN NODE TYPE: " + node.type}
 		</div>
 	);

@@ -26,7 +26,6 @@ export const SearchList: FC<SearchListProps> = ({
 	const [selectedIdx, setSelectedIdx] = useState(0);
 
 	const list: ElementNodeBinding[] = [];
-	let firstValid = false;
 	for (const control of controlCandidates) {
 		if (
 			control.humanName.toUpperCase().includes(searchText.toUpperCase()) ||
@@ -61,9 +60,6 @@ export const SearchList: FC<SearchListProps> = ({
 				),
 				node: control,
 			});
-			if (!firstValid) {
-				firstValid = true;
-			}
 		}
 	}
 

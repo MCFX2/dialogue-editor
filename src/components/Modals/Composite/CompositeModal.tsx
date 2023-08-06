@@ -21,14 +21,20 @@ export interface Composite {
 export interface CompositeModalProps {
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
 	saveComposite: (composite: Composite) => void;
+	controlCandidates: NodeControl[];
 }
 
 export const CompositeModal: FC<CompositeModalProps> = ({
 	setSelectedField,
 	saveComposite,
+	controlCandidates,
 }) => {
 	const [currentComposite, setCurrentComposite] = useState<Composite>({
-		name: { ...DefaultTextControl, label: "Composite Name", uuid:"#newCompositeControl" },
+		name: {
+			...DefaultTextControl,
+			label: "Composite Name",
+			uuid: "#newCompositeControl",
+		},
 		fields: {},
 	});
 
@@ -88,6 +94,7 @@ export const CompositeModal: FC<CompositeModalProps> = ({
 			forcedHeight={height}
 		>
 			<ControlElement
+				controlCandidates={controlCandidates}
 				windowWidth={windowWidth}
 				nodeTable={{}}
 				node={currentComposite.name}
@@ -121,6 +128,7 @@ export const CompositeModal: FC<CompositeModalProps> = ({
 				return (
 					<Fragment key={key}>
 						<ControlElement
+							controlCandidates={controlCandidates}
 							restrict
 							windowWidth={windowWidth}
 							nodeTable={{}}
@@ -164,6 +172,7 @@ export const CompositeModal: FC<CompositeModalProps> = ({
 							invalid={isInvalid}
 						/>
 						<CompositeRestrictionControl
+							controlCandidates={controlCandidates}
 							node={currentComposite.fields[key]}
 							updateNode={(node) => {
 								setCurrentComposite({
@@ -179,6 +188,7 @@ export const CompositeModal: FC<CompositeModalProps> = ({
 				);
 			})}
 			<AddControlButton
+				controlCandidates={controlCandidates}
 				setSelectedField={setSelectedField}
 				controls={controlArray}
 				addControl={(control) => {

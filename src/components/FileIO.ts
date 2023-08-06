@@ -13,6 +13,7 @@ export interface FilesystemState {
 	currentScreenFile?: FileSystemFileHandle;
 	screenFileList?: FileSystemFileHandle[];
 	compositeFileList?: FileSystemFileHandle[];
+	compositeList?: Composite[];
 }
 
 // Initializes the workspace if it's not initialized already.
@@ -39,7 +40,9 @@ async function ensureScreenDirectoryInitialized(
 	return newState;
 }
 
-async function ensureCompositeDirectoryInitialized(IOState: Readonly<FilesystemState>) {
+async function ensureCompositeDirectoryInitialized(
+	IOState: Readonly<FilesystemState>
+) {
 	let newState = IOState;
 	newState = await ensureWorkspaceInitialized(newState);
 
@@ -162,7 +165,35 @@ async function generateCompositeFileList(IOState: Readonly<FilesystemState>) {
 
 	const newState = { ...IOState };
 
-	newState.compositeFileList = files.sort((a, b) => a.name.localeCompare(b.name));
+	newState.compositeFileList = files.sort((a, b) =>
+		a.name.localeCompare(b.name)
+	);
+
+	return newState;
+}
+
+async function generateCompositeList(IOState: Readonly<FilesystemState>) {
+	console.assert(
+		IOState.compositeDirectoryHandle,
+		"Composite directory not initialized"
+	);
+
+	if (!IOState.compositeDirectoryHandle) {
+		return IOState;
+	}
+
+	const composites: Composite[] = [];
+	for await (const entry of IOState.compositeDirectoryHandle.values()) {
+		if (entry.kind === "file") {
+			const file = await entry.getFile();
+			const text = await file.text();
+			composites.push(JSON.parse(text));
+		}
+	}
+
+	const newState = { ...IOState };
+
+	newState.compositeList = composites;
 
 	return newState;
 }
@@ -230,6 +261,8 @@ export async function initWorkspace(
 	newState = await generateFileList(newState);
 
 	newState = await loadCompositeDirectory(newState);
+	newState = await generateCompositeFileList(newState);
+	newState = await generateCompositeList(newState);
 
 	return newState;
 }
@@ -307,12 +340,19 @@ export async function deleteScreen(
 	return await generateFileList(newState);
 }
 
-export async function saveComposite(IOState: Readonly<FilesystemState>, name: string, composite: Composite) {
+export async function saveComposite(
+	IOState: Readonly<FilesystemState>,
+	name: string,
+	composite: Composite
+) {
 	let newState = await ensureCompositeDirectoryInitialized(IOState);
 
-	const newHandle = await newState.compositeDirectoryHandle?.getFileHandle(name, {
-		create: true,
-	});
+	const newHandle = await newState.compositeDirectoryHandle?.getFileHandle(
+		name,
+		{
+			create: true,
+		}
+	);
 
 	if (!newHandle) {
 		return newState;
@@ -322,5 +362,6 @@ export async function saveComposite(IOState: Readonly<FilesystemState>, name: st
 	await writer.write(JSON.stringify(composite));
 	await writer.close();
 
-	return await generateCompositeFileList(newState);
+	newState = await generateCompositeFileList(newState);
+	return await generateCompositeList(newState);
 }

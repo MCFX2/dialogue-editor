@@ -20,6 +20,7 @@ import {
 } from "./Controls/NumberNodeControl";
 import { MinusIcon } from "../SVG/MinusIcon";
 import { ArrayControl, DefaultArrayControl } from "./Controls/ArrayControl";
+import { CompositeControl } from "./Controls/CompositeControl";
 
 export interface NodeControl {
 	type:
@@ -155,6 +156,7 @@ export interface ControlElementProps {
 	index?: number;
 	invalid?: boolean;
 	restrict?: boolean;
+	controlCandidates: NodeControl[];
 }
 
 // generates a JSX element for a primitive control
@@ -173,12 +175,14 @@ export const ControlElement: FC<ControlElementProps> = ({
 	invalid = false,
 	index,
 	restrict,
+	controlCandidates,
 }) => {
 	const controlWidth =
 		windowWidth - 172 - sliderOffset - leftPad + (index !== undefined ? 84 : 0);
 
 	return node.type === "array" ? (
 		<ArrayControl
+			controlCandidates={controlCandidates}
 			node={node}
 			setLabel={setLabel ?? (() => {})}
 			deleteControl={deleteControl}
@@ -192,6 +196,22 @@ export const ControlElement: FC<ControlElementProps> = ({
 			index={index}
 			invalid={invalid}
 			restrict={restrict}
+		/>
+	) : node.type === "composite" ? (
+		<CompositeControl
+			controlCandidates={controlCandidates}
+			node={node}
+			setLabel={setLabel ?? (() => {})}
+			deleteControl={deleteControl}
+			setSelectedField={setSelectedField}
+			controlWidth={controlWidth}
+			nodeTable={nodeTable}
+			pickUpControl={pickUpControl}
+			setValue={setValueAndHeight}
+			windowWidth={windowWidth}
+			leftPad={leftPad}
+			index={index}
+			invalid={invalid}
 		/>
 	) : (
 		<ControlHolder

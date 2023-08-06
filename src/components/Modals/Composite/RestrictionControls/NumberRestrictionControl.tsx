@@ -12,6 +12,7 @@ import styles from "../CompositeModal.module.scss";
 export const NumberRestrictionControl: FC<RestrictionControlProps> = ({
 	node,
 	updateNode,
+	controlCandidates,
 }) => {
 	const args = extractArguments(node.restrictionIdentifier);
 	const isInteger = args["preset"] === "int";
@@ -80,7 +81,7 @@ export const NumberRestrictionControl: FC<RestrictionControlProps> = ({
 					}}
 					type="text"
 					style={{
-						textAlign: 'right'
+						textAlign: "right",
 					}}
 					onBlur={(e) => {
 						let num = sanitizeNumber(e.target.value);
@@ -94,10 +95,15 @@ export const NumberRestrictionControl: FC<RestrictionControlProps> = ({
 						finalizeNode();
 					}}
 				/>
-				<p style={{
-					marginLeft: '4px',
-					marginRight: '4px',
-				}}> -&gt; </p>
+				<p
+					style={{
+						marginLeft: "4px",
+						marginRight: "4px",
+					}}
+				>
+					{" "}
+					-&gt;{" "}
+				</p>
 				<input
 					className={styles.numberRestrictionField}
 					value={maxValue ?? ""}
@@ -119,7 +125,11 @@ export const NumberRestrictionControl: FC<RestrictionControlProps> = ({
 					}}
 				/>
 			</div>
-			<GeneralRestrictionControl node={node} updateNode={updateNode} />
+			<GeneralRestrictionControl
+				controlCandidates={controlCandidates}
+				node={node}
+				updateNode={updateNode}
+			/>
 		</>
 	);
 };

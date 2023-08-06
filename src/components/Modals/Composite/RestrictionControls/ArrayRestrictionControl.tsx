@@ -1,12 +1,17 @@
 import { FC, useState } from "react";
-import { extractArguments, packArguments, restrictNumber, sanitizeNumber } from "../../../NodeWindow/Controls/Sanitize";
-import { DefaultControls } from "../../../NodeWindow/NodeControl";
+import {
+	extractArguments,
+	packArguments,
+	restrictNumber,
+	sanitizeNumber,
+} from "../../../NodeWindow/Controls/Sanitize";
 import { RestrictionControlProps } from "../CompositeRestrictionControl";
 import styles from "../CompositeModal.module.scss";
 
 export const ArrayRestrictionControl: FC<RestrictionControlProps> = ({
 	node,
 	updateNode,
+	controlCandidates,
 }) => {
 	const [maxLength, setMaxLength] = useState("");
 
@@ -42,10 +47,12 @@ export const ArrayRestrictionControl: FC<RestrictionControlProps> = ({
 					}}
 				>
 					<option value="">(Any)</option>
-					{DefaultControls.map((control) => {
+					{controlCandidates.map((control) => {
 						const id =
 							control.type === "number"
 								? "number|" + (control.restrictionIdentifier ? "int" : "float")
+								: control.type === "composite"
+								? control.humanName
 								: control.type;
 						return (
 							<option key={id} value={id}>
