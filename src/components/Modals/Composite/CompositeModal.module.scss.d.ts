@@ -1,3 +1,4 @@
+export declare const arrayDropdownField: string;
 export declare const compositeModalTitle: string;
 export declare const generalRestriction: string;
 export declare const generalRestrictionField: string;

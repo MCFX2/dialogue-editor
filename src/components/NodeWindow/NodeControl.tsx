@@ -258,7 +258,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 	);
 };
 
-export const DefaultControls: NodeControl[] = [
+export const DefaultControls: ReadonlyArray<NodeControl> = [
 	DefaultNumberControl,
 	DefaultIntegerControl,
 	DefaultTextControl,

@@ -5,7 +5,7 @@ import { NodeControl } from "./NodeControl";
 export interface SearchListProps {
 	searchText: string;
 
-	controlCandidates: NodeControl[];
+	controlCandidates: ReadonlyArray<NodeControl>;
 
 	addControl: (control: NodeControl) => void;
 

@@ -4,20 +4,13 @@ import styles from "./CompositeModal.module.scss";
 import { GeneralRestrictionControl } from "./RestrictionControls/GeneralRestrictionControl";
 import { TextRestrictionControl } from "./RestrictionControls/TextRestrictionControl";
 import { NumberRestrictionControl } from "./RestrictionControls/NumberRestrictionControl";
+import { ArrayRestrictionControl } from "./RestrictionControls/ArrayRestrictionControl";
 
 export interface CompositeRestrictionControlProps {
 	node: NodeControl;
 	updateNode: (node: NodeControl) => void;
 	padding?: number;
 }
-
-const ArrayRestrictionControl: FC<RestrictionControlProps> = ({ node }) => {
-	return (
-		<>
-			<div></div>
-		</>
-	);
-};
 
 export interface RestrictionControlProps {
 	node: NodeControl;
@@ -49,12 +42,12 @@ export const recursiveCalculateRestrictorHeight = (
 	}, 0);
 };
 
-const generalRestrictionHeight = 50;
+const generalRestrictionHeight = 40;
 
 const restrictionHeightTable: { [type: string]: number } = {
 	string: generalRestrictionHeight + 64,
 	number: generalRestrictionHeight + 32,
-	array: 10,
+	array: 64,
 	boolean: generalRestrictionHeight,
 	node: 0,
 	composite: generalRestrictionHeight,

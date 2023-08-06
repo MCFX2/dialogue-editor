@@ -158,3 +158,16 @@
 		cursor: no-drop;
 	}
 }
+
+.arrayDropdownField {
+	@extend .generalRestrictionField;
+
+	background-color: #00000099;
+
+	
+	width: 200px;
+
+	&:hover {
+		cursor: pointer;
+	}
+}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AppSidebar } from "./sidebar/Sidebar";
+import { AppSidebar } from "./components/Sidebar/Sidebar";
 import styles from "./App.module.scss";
 import { useMouseMove } from "./components/MouseUtils/UseMouseMove";
 import { useMouseRelease } from "./components/MouseUtils/UseMouseClick";
