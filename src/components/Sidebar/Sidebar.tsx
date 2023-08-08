@@ -23,10 +23,11 @@ export interface SidebarProps {
 	currentScreen: string;
 	loadScreen: (filename: string) => void;
 	createScreen: (filename: string) => void;
+	renameScreen: (oldName: string, newName: string) => void;
+	deleteScreen: (name: string) => void;
 
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
 
-	renameScreen: (oldName: string, newName: string) => void;
 
 	suppressKeyboardShortcuts: boolean;
 
@@ -71,8 +72,9 @@ export const AppSidebar: FC<SidebarProps> = ({
 	currentScreen,
 	loadScreen,
 	createScreen,
-	setSelectedField,
 	renameScreen,
+	deleteScreen,
+	setSelectedField,
 	suppressKeyboardShortcuts,
 	openCompositeModal,
 }) => {
@@ -120,6 +122,7 @@ export const AppSidebar: FC<SidebarProps> = ({
 						<Menu
 							menuItemStyles={{
 								button: {
+									paddingLeft: '20px',
 									":hover": {
 										backgroundColor: "#00254b",
 									},
@@ -149,6 +152,7 @@ export const AppSidebar: FC<SidebarProps> = ({
 								screenFiles={screenFiles}
 								setSelectedField={setSelectedField}
 								unsaved={unsaved}
+								deleteScreen={deleteScreen}
 							/>
 						</Menu>
 
@@ -188,7 +192,7 @@ export const AppSidebar: FC<SidebarProps> = ({
 						</button>
 					</div>
 					<div className={styles.legalText}>
-						{"v0.5-rc1" + (collapsed ? "" : " (c) 2023 Rozalily")}
+						{"v0.5" + (collapsed ? "" : " (c) 2023 Rozalily")}
 						<p>{collapsed ? "EVALUATION" : "For evaluation purposes only."}</p>
 					</div>
 				</div>

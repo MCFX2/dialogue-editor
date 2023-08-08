@@ -2,6 +2,7 @@ import { FC, useState } from "react";
 import { MenuItem, SubMenu } from "react-pro-sidebar";
 import { WindowIcon } from "../SVG/WindowIcon";
 import styles from "./Sidebar.module.scss";
+import { MinusIcon } from "../SVG/MinusIcon";
 
 export interface ScreensMenuProps {
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
@@ -10,6 +11,7 @@ export interface ScreensMenuProps {
 	createScreen: (filename: string) => void;
 	loadScreen: (filename: string) => void;
 	renameScreen: (oldName: string, newName: string) => void;
+	deleteScreen: (name: string) => void;
 	currentScreen: string;
 
 	collapsed: boolean;
@@ -22,6 +24,7 @@ export const ScreensMenu: FC<ScreensMenuProps> = ({
 	createScreen,
 	loadScreen,
 	renameScreen,
+	deleteScreen,
 	currentScreen,
 	collapsed,
 	unsaved,
@@ -60,37 +63,50 @@ export const ScreensMenu: FC<ScreensMenuProps> = ({
 								key={file}
 								onClick={() => loadScreen(file)}
 							>
-								{collapsed ? (
-									<p className={styles.filenameFieldNonEditable}>
-										{fileDisplay}
-									</p>
-								) : (
-									<input
-										onClick={(e) => e.stopPropagation()}
-										onFocus={() => {
-											setSelectedField(idx + "#screenNameField");
-											setFilenameSelected(idx);
-										}}
-										onBlur={() => {
-											setSelectedField("", idx + "#screenNameField");
-											setFilenameSelected(-2);
+								<div className={styles.screenEntryContainer}>
+									{collapsed ? (
+										<p className={styles.filenameFieldNonEditable}>
+											{fileDisplay}
+										</p>
+									) : (
+										<>
+											<MinusIcon
+												size={16}
+												className={styles.deleteButton}
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+														deleteScreen(file);
+												}}
+											/>
+											<input
+												onClick={(e) => e.stopPropagation()}
+												onFocus={() => {
+													setSelectedField(idx + "#screenNameField");
+													setFilenameSelected(idx);
+												}}
+												onBlur={() => {
+													setSelectedField("", idx + "#screenNameField");
+													setFilenameSelected(-2);
 
-											if (
-												editedFilename !== undefined &&
-												editedFilename !== ""
-											) {
-												renameScreen(file, editedFilename + ".json");
-											}
+													if (
+														editedFilename !== undefined &&
+														editedFilename !== ""
+													) {
+														renameScreen(file, editedFilename + ".json");
+													}
 
-											setEditedFilename(undefined);
-										}}
-										className={styles.filenameField}
-										value={fileDisplay}
-										onChange={(e) => {
-											setEditedFilename(e.target.value);
-										}}
-									/>
-								)}
+													setEditedFilename(undefined);
+												}}
+												className={styles.filenameField}
+												value={fileDisplay}
+												onChange={(e) => {
+													setEditedFilename(e.target.value);
+												}}
+											/>
+										</>
+									)}
+								</div>
 							</MenuItem>
 						);
 					})}

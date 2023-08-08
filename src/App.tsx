@@ -15,6 +15,7 @@ import * as uuid from "uuid";
 import { Canvas } from "./components/Canvas/Canvas";
 import {
 	FilesystemState,
+	deleteScreen,
 	initWorkspace,
 	renameScreen,
 	saveComposite,
@@ -259,13 +260,13 @@ function App() {
 		}
 
 		if (node.type === "composite") {
-			return Object.values(node.content as { [key: string]: NodeControl }).reduce <
-				NodeControl[]
-				>((prev, cur) => {
-					return [...prev, ...getDraggableNodeControls(cur)];
-				}, []);
+			return Object.values(
+				node.content as { [key: string]: NodeControl }
+			).reduce<NodeControl[]>((prev, cur) => {
+				return [...prev, ...getDraggableNodeControls(cur)];
+			}, []);
 		}
-	
+
 		return [];
 	};
 	const getAllDraggableNodeControls = (node: NodeHandle) => {
@@ -375,6 +376,14 @@ function App() {
 			<Background cameraPos={cameraPosition} />
 			<div className={styles.wholeAppContainer}>
 				<AppSidebar
+					deleteScreen={async (file) => {
+						const screenWasOpen = IOState.currentScreenFile !== undefined;
+						const newState = await deleteScreen(IOState, file);
+						if (screenWasOpen && newState.currentScreenFile === undefined) {
+							updateScreen([]);
+						}
+						setIOState(newState);
+					}}
 					createScreen={createScreen}
 					createNewNode={makeNode}
 					openCompositeModal={() => {

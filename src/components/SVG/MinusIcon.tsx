@@ -3,11 +3,13 @@ import { FC } from "react";
 export interface MinusIconProps {
 	className?: string;
 	size: number;
+	onClick?: (e: any) => void;
 }
 
 export const MinusIcon: FC<MinusIconProps> = ({
 	className = undefined,
 	size = 32,
+	onClick = undefined,
 }) => {
 	return (
 		<svg
@@ -17,6 +19,7 @@ export const MinusIcon: FC<MinusIconProps> = ({
 			viewBox="0 0 32 32"
 			version="1.1"
 			xmlns="http://www.w3.org/2000/svg"
+			onClick={onClick}
 		>
 			<g
 				id="Page-1"
