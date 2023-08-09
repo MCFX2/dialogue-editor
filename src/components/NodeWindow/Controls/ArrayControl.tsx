@@ -8,6 +8,21 @@ import { v4 } from "uuid";
 import { CompositeRestrictionControl } from "../../Modals/Composite/CompositeRestrictionControl";
 import { extractArguments } from "./Sanitize";
 
+export const recursivelySetParent = (node: NodeControl, parent: string) => {
+	node.parent = parent;
+	if (node.content) {
+		if (node.type === "array") {
+			for (let i = 0; i < node.content.length; i++) {
+				recursivelySetParent(node.content[i], parent);
+			}
+		} else if(node.type === "composite") {
+			for (const child of Object.values(node.content)) {
+				recursivelySetParent(child as NodeControl, parent);
+			}
+		}
+	}
+}
+
 export const DefaultArrayControl: NodeControl = {
 	type: "array",
 	humanName: "Array",
@@ -144,7 +159,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 					addControl={(c) => {
 						const newControl = { ...c };
 						newControl.index = children.length;
-						newControl.parent = node.parent;
+						recursivelySetParent(newControl, node.parent);
 						newControl.uuid = v4();
 						children.push(newControl); // this is immediately overwritten by the setValue call, but it's necessary for the height calculation
 						setValue(children);
