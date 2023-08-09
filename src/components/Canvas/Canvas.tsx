@@ -145,7 +145,6 @@ export const Canvas: FC<CanvasProps> = ({
 		<canvas
 			style={{
 				position: "fixed",
-				zIndex: 2,
 				pointerEvents: "none",
 			}}
 			ref={canvasRef}
