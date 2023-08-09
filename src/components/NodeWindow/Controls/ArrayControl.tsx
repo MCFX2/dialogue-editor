@@ -54,6 +54,7 @@ export interface ArrayControlProps {
 	index?: number;
 	invalid?: boolean;
 	restrict?: boolean;
+	blockEdit?: boolean;
 }
 
 export const ArrayControl: FC<ArrayControlProps> = ({
@@ -73,6 +74,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 	index,
 	invalid = false,
 	restrict = false,
+	blockEdit = false,
 }) => {
 	const children = (node.content ?? []) as NodeControl[];
 
@@ -116,7 +118,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 					width: `${windowWidth - leftPad}px`,
 				}}
 			>
-				{deleteControl && (
+				{!blockEdit && deleteControl && (
 					<div className={styles.deleteControlButton} onClick={deleteControl}>
 						<MinusIcon size={32} />
 					</div>
@@ -155,7 +157,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 					</div>
 				)}
 				<AddControlButton
-					disabled={maxLength !== undefined && children.length >= maxLength}
+					disabled={blockEdit || (maxLength !== undefined && children.length >= maxLength)}
 					addControl={(c) => {
 						const newControl = { ...c };
 						newControl.index = children.length;
@@ -197,6 +199,7 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 					return (
 						<Fragment key={child.uuid}>
 							<ControlElement
+								blockEdit={blockEdit}
 								controlCandidates={controlCandidates}
 								restrict={restrict}
 								index={idx}

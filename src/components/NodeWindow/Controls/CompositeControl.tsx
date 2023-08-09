@@ -3,6 +3,7 @@ import { ControlElement, NodeControl } from "../NodeControl";
 import { NodeHandle } from "../../../App";
 import styles from "./Controls.module.scss";
 import { MinusIcon } from "../../SVG/MinusIcon";
+import { extractArguments } from "./Sanitize";
 
 export const DefaultCompositeControl: NodeControl = {
 	type: "composite",
@@ -34,6 +35,7 @@ export interface CompositeControlProps {
 	leftPad: number;
 	index?: number;
 	invalid?: boolean;
+	blockEdit?: boolean;
 }
 
 export const CompositeControl: FC<CompositeControlProps> = ({
@@ -52,10 +54,13 @@ export const CompositeControl: FC<CompositeControlProps> = ({
 	leftPad,
 	index,
 	invalid = false,
+	blockEdit = false,
 }) => {
 	const children = (node.content ?? []) as { [uuid: string]: NodeControl };
 
-	// const args = extractArguments(node.restrictionIdentifier);
+	const args = extractArguments(node.restrictionIdentifier);
+
+	const allowEdit = args["disabled"] !== "true";
 
 	return (
 		<>
@@ -66,7 +71,7 @@ export const CompositeControl: FC<CompositeControlProps> = ({
 					width: `${windowWidth - leftPad}px`,
 				}}
 			>
-				{deleteControl && (
+				{!blockEdit && deleteControl && (
 					<div className={styles.deleteControlButton} onClick={deleteControl}>
 						<MinusIcon size={32} />
 					</div>
@@ -109,6 +114,7 @@ export const CompositeControl: FC<CompositeControlProps> = ({
 				{Object.keys(children).map((uuid) => {
 					return (
 						<ControlElement
+							blockEdit={blockEdit || !allowEdit}
 							key={uuid}
 							controlCandidates={controlCandidates}
 							leftPad={32 + leftPad}

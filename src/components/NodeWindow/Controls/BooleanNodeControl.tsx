@@ -20,6 +20,7 @@ export interface BooleanNodeControlProps {
 	setValue: (newValue: boolean) => void;
 	restriction?: string;
 	controlWidth: number;
+	blockEdit?: boolean;
 }
 
 export const BooleanNodeControl: FC<BooleanNodeControlProps> = ({
@@ -27,6 +28,7 @@ export const BooleanNodeControl: FC<BooleanNodeControlProps> = ({
 	setValue,
 	controlWidth,
 	restriction,
+	blockEdit = false,
  }) => {
 	const args = extractArguments(restriction);
 	const allowEdit = args["disabled"] !== "true";
@@ -38,7 +40,7 @@ export const BooleanNodeControl: FC<BooleanNodeControlProps> = ({
 		}}
 	>
 		<input
-			disabled={!allowEdit}
+			disabled={blockEdit || !allowEdit}
 			checked={value ?? false}
 			onChange={(e) => setValue(e.target.checked)}
 			type="checkbox"

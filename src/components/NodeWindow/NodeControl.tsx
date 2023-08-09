@@ -61,6 +61,7 @@ interface ControlHolderProps {
 	windowWidth: number;
 	index?: number;
 	invalid?: boolean;
+	blockEdit?: boolean;
 	children: any;
 }
 
@@ -75,6 +76,7 @@ const ControlHolder: FC<ControlHolderProps> = ({
 	index,
 	windowWidth,
 	invalid,
+	blockEdit = false,
 	children,
 }) => {
 	return (
@@ -85,7 +87,7 @@ const ControlHolder: FC<ControlHolderProps> = ({
 				width: `${windowWidth - leftPad}px`,
 			}}
 		>
-			{deleteControl && (
+			{!blockEdit && deleteControl && (
 				<div className={styles.deleteControlButton} onClick={deleteControl}>
 					<MinusIcon size={32} />
 				</div>
@@ -157,6 +159,7 @@ export interface ControlElementProps {
 	invalid?: boolean;
 	restrict?: boolean;
 	controlCandidates: NodeControl[];
+	blockEdit?: boolean;
 }
 
 // generates a JSX element for a primitive control
@@ -176,12 +179,14 @@ export const ControlElement: FC<ControlElementProps> = ({
 	index,
 	restrict,
 	controlCandidates,
+	blockEdit = false,
 }) => {
 	const controlWidth =
 		windowWidth - 172 - sliderOffset - leftPad + (index !== undefined ? 84 : 0);
 
 	return node.type === "array" ? (
 		<ArrayControl
+			blockEdit={blockEdit}
 			controlCandidates={controlCandidates}
 			node={node}
 			setLabel={setLabel ?? (() => {})}
@@ -199,6 +204,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 		/>
 	) : node.type === "composite" ? (
 		<CompositeControl
+			blockEdit={blockEdit}
 			controlCandidates={controlCandidates}
 			node={node}
 			setLabel={setLabel ?? (() => {})}
@@ -214,7 +220,8 @@ export const ControlElement: FC<ControlElementProps> = ({
 			invalid={invalid}
 		/>
 	) : (
-		<ControlHolder
+				<ControlHolder
+					blockEdit={blockEdit}
 			index={index}
 			leftPad={leftPad}
 			onSliderGrab={onSliderGrab}
@@ -237,6 +244,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 					setValue={setValueAndHeight}
 					value={node.content}
 					restriction={node.restrictionIdentifier}
+					blockEdit={blockEdit}
 				/>
 			) : node.type === "node" ? (
 				<DraggableNodeControl
@@ -258,6 +266,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 						);
 					}}
 					forceInvalid={invalid}
+					blockEdit={blockEdit}
 				/>
 			) : node.type === "number" ? (
 				<NumberNodeControl
@@ -271,6 +280,7 @@ export const ControlElement: FC<ControlElementProps> = ({
 							selected ? undefined : node.uuid
 						);
 					}}
+					blockEdit={blockEdit}
 				/>
 			) : (
 				<p>UNKNOWN CONTROL TYPE "{node.type}"!</p>

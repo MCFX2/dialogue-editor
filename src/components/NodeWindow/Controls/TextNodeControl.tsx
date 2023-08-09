@@ -22,6 +22,7 @@ export interface TextNodeControlProps {
 	setSelectedField: (selected: boolean) => void;
 	restrictionId?: string;
 	forceInvalid?: boolean;
+	blockEdit?: boolean;
 }
 
 export const TextNodeControl: FC<TextNodeControlProps> = ({
@@ -31,6 +32,7 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 	setSelectedField,
 	restrictionId,
 	forceInvalid = false,
+	blockEdit = false,
 }) => {
 	const args = extractArguments(restrictionId);
 
@@ -45,7 +47,7 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 
 	const allowEdit = args["disabled"] !== "true";
 
-	return allowEdit ? (
+	return (!blockEdit && allowEdit) ? (
 		<input
 			className={valid ? styles.textField : styles.textFieldInvalid}
 			placeholder='""'

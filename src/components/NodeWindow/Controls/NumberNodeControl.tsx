@@ -34,6 +34,7 @@ export interface NumberNodeControlProps {
 	setValue: (newValue: any) => void;
 	controlWidth: number;
 	setSelectedField: (selected: boolean) => void;
+	blockEdit?: boolean;
 }
 
 export const NumberNodeControl: FC<NumberNodeControlProps> = ({
@@ -42,6 +43,7 @@ export const NumberNodeControl: FC<NumberNodeControlProps> = ({
 	restriction,
 	controlWidth,
 	setSelectedField,
+	blockEdit = false,
 }) => {
 	const [curValue, setCurValue] = useState<string | null>(value);
 
@@ -56,7 +58,7 @@ export const NumberNodeControl: FC<NumberNodeControlProps> = ({
 	const allowNegative = minValue ? parseFloat(minValue) < 0 : true;
 
 
-	return allowEdit ? (
+	return (!blockEdit && allowEdit) ? (
 		<input
 			className={styles.numberField}
 			placeholder="0"
