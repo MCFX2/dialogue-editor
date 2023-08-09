@@ -25,6 +25,7 @@ import { Modal } from "./components/Modals/Modal";
 import { Background } from "./components/Background/Background";
 import { CompositeModal } from "./components/Modals/Composite/CompositeModal";
 import { DefaultCompositeControl } from "./components/NodeWindow/Controls/CompositeControl";
+import { UnsavedModal } from "./components/Modals/Unsaved/UnsavedModal";
 
 export interface NodeHandle {
 	name: string;
@@ -56,6 +57,10 @@ function App() {
 	const [currentModal, setCurrentModal] = useState<"composite" | undefined>(
 		undefined
 	);
+
+	const [unsavedModal, setUnsavedModal] = useState(false);
+	const unsavedModalConfirmAction = useRef<() => void>(() => {});
+	const unsavedModalName = useRef("");
 
 	const [screen, updateScreen] = useState<NodeHandle[]>([]);
 
@@ -377,12 +382,25 @@ function App() {
 			<div className={styles.wholeAppContainer}>
 				<AppSidebar
 					deleteScreen={async (file) => {
-						const screenWasOpen = IOState.currentScreenFile !== undefined;
-						const newState = await deleteScreen(IOState, file);
-						if (screenWasOpen && newState.currentScreenFile === undefined) {
-							updateScreen([]);
+						if (unsavedModal) {
+							return;
 						}
-						setIOState(newState);
+
+						const screenWasOpen = IOState.currentScreenFile !== undefined;
+						unsavedModalName.current = `Deleting ${file} cannot be undone.${
+							IOState.currentScreenFile &&
+							IOState.currentScreenFile?.name === file
+								? " You will lose everything in the currently open screen."
+								: ""
+						}`;
+						unsavedModalConfirmAction.current = async () => {
+							const newState = await deleteScreen(IOState, file);
+							if (screenWasOpen && newState.currentScreenFile === undefined) {
+								updateScreen([]);
+							}
+							setIOState(newState);
+						};
+						setUnsavedModal(true);
 					}}
 					createScreen={createScreen}
 					createNewNode={makeNode}
@@ -390,10 +408,26 @@ function App() {
 						setCurrentModal("composite");
 					}}
 					loadWorkspace={async () => {
-						try {
-							setIOState(await initWorkspace(IOState));
-						} catch (e) {
-							console.log(e);
+						if (unsavedModal) {
+							return;
+						}
+						if (unsaved && IOState.currentScreenFile !== undefined) {
+							unsavedModalName.current =
+								"Loading a new workspace will discard unsaved changes to the current workspace.";
+							unsavedModalConfirmAction.current = async () => {
+								try {
+									setIOState(await initWorkspace(IOState));
+								} catch (e) {
+									console.log(e);
+								}
+							};
+							setUnsavedModal(true);
+						} else {
+							try {
+								setIOState(await initWorkspace(IOState));
+							} catch (e) {
+								console.log(e);
+							}
 						}
 					}}
 					saveWorkspace={() => {
@@ -403,7 +437,20 @@ function App() {
 					currentScreen={IOState.currentScreenFile?.name ?? "Untitled"}
 					unsaved={unsaved}
 					loadScreen={(filename) => {
-						loadScreen(filename);
+						if (unsavedModal) {
+							return;
+						}
+						if (unsaved) {
+							unsavedModalName.current = `Loading '${filename}' will discard unsaved changes to '${
+								IOState.currentScreenFile?.name ?? "untitled screen"
+							}'.`;
+							unsavedModalConfirmAction.current = () => {
+								loadScreen(filename);
+							};
+							setUnsavedModal(true);
+						} else {
+							loadScreen(filename);
+						}
 					}}
 					setSelectedField={updateSelectedField}
 					renameScreen={async (oldName, newName) => {
@@ -521,7 +568,17 @@ function App() {
 					)}
 				</div>
 				{currentModal && (
-					<Modal closeModal={() => setCurrentModal(undefined)}>
+					<Modal closeModal={() => {
+						if(unsavedModal) {
+							return;
+						}
+
+						unsavedModalConfirmAction.current = () => {
+							setCurrentModal(undefined);
+						}
+						unsavedModalName.current = "Closing this modal will discard the composite without saving it.";
+						setUnsavedModal(true);
+					}}>
 						{currentModal === "composite" ? (
 							<CompositeModal
 								existingComposites={IOState.compositeList ?? []}
@@ -535,6 +592,30 @@ function App() {
 								}}
 							/>
 						) : undefined}
+					</Modal>
+				)}
+				{unsavedModal && (
+					<Modal
+						closeModal={() => {
+							setUnsavedModal(false);
+							unsavedModalConfirmAction.current = () => {};
+							unsavedModalName.current = "";
+						}}
+					>
+						<UnsavedModal
+							onCancel={() => {
+								setUnsavedModal(false);
+								unsavedModalConfirmAction.current = () => {};
+								unsavedModalName.current = "";
+							}}
+							onConfirm={() => {
+								setUnsavedModal(false);
+								unsavedModalConfirmAction.current();
+								unsavedModalConfirmAction.current = () => {};
+								unsavedModalName.current = "";
+							}}
+							unsavedTarget={unsavedModalName.current}
+						/>
 					</Modal>
 				)}
 			</div>

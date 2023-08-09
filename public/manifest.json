@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Nodedit",
+  "name": "Node Editor",
   "icons": [
     {
       "src": "favicon.ico",

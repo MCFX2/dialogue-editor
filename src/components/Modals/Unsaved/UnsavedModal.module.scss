@@ -1,0 +1,108 @@
+@import '../../../resources/monocraft.modules.scss';
+
+.unsavedModalTitle {
+	color: #f7f7f7;
+	font-size: 24px;
+
+	background-color: transparent;
+	border-color: transparent;
+	user-select: none;
+
+	font-family: 'Monocraft';
+	text-overflow: ellipsis;
+
+	text-shadow: black 2px 2px 4px;
+
+	align-self: center;
+	display: flex;
+
+	flex-grow: 1;
+
+	margin-left: 8px;
+
+	min-width: 80px;
+}
+
+.unsavedModal {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	width: auto;
+	height: auto;
+
+	margin-top: 8px;
+
+	margin-left: 32px;
+	margin-right: 32px;
+}
+
+.unsavedModalText {
+	user-select: none;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	text-align: center;
+
+	width: auto;
+	height: 180px;
+
+	padding-left: 8px;
+	padding-right: 8px;
+
+	color: #f7f7f7;
+
+	font-family: 'Monocraft';
+	font-size: 16px;
+
+	border-style: solid;
+	border-color: #c0c0c0;
+	border-width: 1px;
+}
+
+.unsavedModalButton {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+
+	width: auto;
+	height: 32px;
+
+	margin-left: 8px;
+	margin-right: 8px;
+
+	background-color: #f7f7f733;
+	color: #f7f7f7;
+
+	font-family: 'Monocraft';
+	font-size: 16px;
+
+	user-select: none;
+
+	&:hover {
+		background-color: #f7f7f766;
+		color: #000000;
+		cursor: pointer;
+	}
+}
+
+.unsavedModalButtons {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+
+	width: auto;
+	height: 32px;
+
+	margin-left: 8px;
+	margin-right: 8px;
+
+	// color: #f7f7f7;
+
+	font-family: 'Monocraft';
+	font-size: 16px;
+}
