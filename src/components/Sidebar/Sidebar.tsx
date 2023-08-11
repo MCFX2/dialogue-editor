@@ -192,7 +192,7 @@ export const AppSidebar: FC<SidebarProps> = ({
 						</button>
 					</div>
 					<div className={styles.legalText}>
-						{"v0.6-alpha" + (collapsed ? "" : " (c) 2023 Rozalily")}
+						{"v0.6-beta" + (collapsed ? "" : " (c) 2023 Rozalily")}
 						<p>{collapsed ? "EVALUATION" : "For evaluation purposes only."}</p>
 					</div>
 				</div>

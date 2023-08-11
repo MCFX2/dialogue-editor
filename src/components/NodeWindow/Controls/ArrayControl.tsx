@@ -1,6 +1,6 @@
 import { FC, Fragment } from "react";
 import { ControlElement, NodeControl } from "../NodeControl";
-import { NodeHandle } from "../../../App";
+import { NodeHandle, deepCopy } from "../../../App";
 import styles from "./Controls.module.scss";
 import { MinusIcon } from "../../SVG/MinusIcon";
 import { AddControlButton } from "../AddControlButton";
@@ -15,13 +15,13 @@ export const recursivelySetParent = (node: NodeControl, parent: string) => {
 			for (let i = 0; i < node.content.length; i++) {
 				recursivelySetParent(node.content[i], parent);
 			}
-		} else if(node.type === "composite") {
+		} else if (node.type === "composite") {
 			for (const child of Object.values(node.content)) {
 				recursivelySetParent(child as NodeControl, parent);
 			}
 		}
 	}
-}
+};
 
 export const DefaultArrayControl: NodeControl = {
 	type: "array",
@@ -157,14 +157,17 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 					</div>
 				)}
 				<AddControlButton
-					disabled={blockEdit || (maxLength !== undefined && children.length >= maxLength)}
+					disabled={
+						blockEdit ||
+						(maxLength !== undefined && children.length >= maxLength)
+					}
 					addControl={(c) => {
-						const newControl = { ...c };
+						const newControl = deepCopy(c);
 						newControl.index = children.length;
 						recursivelySetParent(newControl, node.parent);
 						newControl.uuid = v4();
-						children.push(newControl); // this is immediately overwritten by the setValue call, but it's necessary for the height calculation
-						setValue(children);
+						const newChildren = [...deepCopy(children), newControl];
+						setValue(newChildren);
 					}}
 					setSelectedField={(uuid, oldUuid) => {
 						setSelectedField(uuid, oldUuid);
@@ -214,17 +217,19 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 								nodeTable={nodeTable}
 								windowWidth={windowWidth}
 								setLabel={(newLabel) => {
-									const newControl = { ...child };
+									const newControl = deepCopy(child);
 									newControl.label = newLabel;
-									children[idx] = newControl;
-									setValue(children);
+									const newChildren = deepCopy(children);
+									newChildren[idx] = newControl;
+									setValue(newChildren);
 								}}
 								setValueAndHeight={(newValue, newHeight) => {
-									const newControl = { ...child };
+									const newControl = deepCopy(child);
 									newControl.content = newValue;
 									newControl.renderHeight = newHeight ?? child.renderHeight;
-									children[idx] = newControl;
-									setValue(children);
+									const newChildren = deepCopy(children);
+									newChildren[idx] = newControl;
+									setValue(newChildren);
 								}}
 								pickUpControl={pickUpControl}
 								setSelectedField={setSelectedField}
@@ -236,11 +241,12 @@ export const ArrayControl: FC<ArrayControlProps> = ({
 									controlCandidates={controlCandidates}
 									node={child}
 									updateNode={(newNode) => {
-										const newControl = { ...child };
+										const newControl = deepCopy(child);
 										newControl.restrictionIdentifier =
 											newNode.restrictionIdentifier;
-										children[idx] = newControl;
-										setValue(children);
+										const newChildren = deepCopy(children);
+										newChildren[idx] = newControl;
+										setValue(newChildren);
 									}}
 									padding={leftPad + 32}
 								/>

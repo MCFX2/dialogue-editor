@@ -1,10 +1,10 @@
-import React, { FC, useState } from "react";
+import { FC, useState } from "react";
 import { ResizableWindow } from "../Resize/ResizableWindow";
 import styles from "./NodeWindow.module.scss";
 import { useMouseRelease } from "../MouseUtils/UseMouseClick";
 import { useMouseMove } from "../MouseUtils/UseMouseMove";
 import { ControlElement, NodeControl } from "./NodeControl";
-import { NodeHandle } from "../../App";
+import { NodeHandle, deepCopy } from "../../App";
 import { SquareXIcon } from "../SVG/SquareXIcon";
 import { WindowPlusIcon } from "../SVG/WindowPlusIcon";
 import { AddControlButton } from "./AddControlButton";
@@ -82,10 +82,21 @@ export const NodeWindow: FC<NodeWindowProps> = ({
 	const [sliderPos, setSliderPos] = useState(0);
 	const [reqSliderPos, setReqSliderPos] = useState(0);
 
+	const [nodeTitle, setNodeTitle] = useState<string | undefined>(undefined);
+	const [nodePosition, setNodePosition] = useState<
+		{ x: number; y: number } | undefined
+	>(undefined);
+
 	useMouseRelease((e) => {
-		if (grabbingFrom !== undefined && e.button === 0) {
-			setGrabbingFrom(undefined);
-			setReqSliderPos(sliderPos);
+		if (e.button === 0) {
+			if (grabbingFrom !== undefined) {
+				setGrabbingFrom(undefined);
+				setReqSliderPos(sliderPos);
+			}
+			if (nodePosition !== undefined) {
+				setRenderPosition(nodePosition);
+				setNodePosition(undefined);
+			}
 		}
 	});
 
@@ -112,10 +123,10 @@ export const NodeWindow: FC<NodeWindowProps> = ({
 		<ResizableWindow
 			allowOutOfBounds={true}
 			onWindowMoved={(newPos) => {
-				setRenderPosition(newPos);
+				setNodePosition(newPos);
 			}}
-			forcedPositionX={renderPosition.x}
-			forcedPositionY={renderPosition.y}
+			forcedPositionX={nodePosition?.x ?? renderPosition.x}
+			forcedPositionY={nodePosition?.y ?? renderPosition.y}
 			ignoreWindowResize={true}
 			minWidth={400}
 			defaultWidth={400}
@@ -129,14 +140,17 @@ export const NodeWindow: FC<NodeWindowProps> = ({
 					<>
 						<input
 							className={styles.nodeWindowTitle}
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
+							value={nodeTitle ?? title}
+							onChange={(e) => setNodeTitle(e.target.value)}
 							placeholder="(untitled)"
 							onFocus={() => {
 								setSelectedField("#nodeWindowTitleField");
+								setNodeTitle(title);
 							}}
 							onBlur={() => {
 								setSelectedField("", "#nodeWindowTitleField");
+								setTitle(nodeTitle!);
+								setNodeTitle(undefined);
 							}}
 						/>
 						<div className={styles.nodeWindowSafeMiddle} />
@@ -163,12 +177,12 @@ export const NodeWindow: FC<NodeWindowProps> = ({
 					sliderOffset={sliderPos}
 					onSliderGrab={(e) => setGrabbingFrom(e.clientX)}
 					setLabel={(newLabel) => {
-						const newControl = { ...control };
+						const newControl = deepCopy(control);
 						newControl.label = newLabel;
 						updateControl(control.uuid, newControl);
 					}}
 					setValueAndHeight={(newValue, newHeight) => {
-						const newControl = { ...control };
+						const newControl = deepCopy(control);
 						newControl.content = newValue;
 						newControl.renderHeight = newHeight ?? control.renderHeight;
 						updateControl(control.uuid, newControl);

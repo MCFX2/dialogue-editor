@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import styles from "./NodeControl.module.scss";
 import { NodeHandle } from "../../App";
 import {
@@ -79,6 +79,10 @@ const ControlHolder: FC<ControlHolderProps> = ({
 	blockEdit = false,
 	children,
 }) => {
+	const [labelContent, setLabelContent] = useState<string | undefined>(
+		undefined
+	);
+
 	return (
 		<div
 			className={styles.controlContainer}
@@ -110,16 +114,21 @@ const ControlHolder: FC<ControlHolderProps> = ({
 					}
 					placeholder="(label)"
 					type="text"
-					value={text}
-					onChange={(e) => setText(e.target.value)}
+					value={labelContent ?? text}
+					onChange={(e) => {
+						setLabelContent(e.target.value);
+					}}
 					style={{
 						width: `${100 + sliderOffset + (deleteControl ? 0 : 32)}px`,
 					}}
 					onFocus={() => {
+						setLabelContent(text);
 						setSelectedField(true);
 					}}
 					onBlur={() => {
 						setSelectedField(false);
+						setText(labelContent ?? "");
+						setLabelContent(undefined);
 					}}
 				/>
 			) : (
@@ -220,8 +229,8 @@ export const ControlElement: FC<ControlElementProps> = ({
 			invalid={invalid}
 		/>
 	) : (
-				<ControlHolder
-					blockEdit={blockEdit}
+		<ControlHolder
+			blockEdit={blockEdit}
 			index={index}
 			leftPad={leftPad}
 			onSliderGrab={onSliderGrab}

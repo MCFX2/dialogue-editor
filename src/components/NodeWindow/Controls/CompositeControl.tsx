@@ -1,6 +1,6 @@
 import { FC, Fragment } from "react";
 import { ControlElement, NodeControl } from "../NodeControl";
-import { NodeHandle } from "../../../App";
+import { NodeHandle, deepCopy } from "../../../App";
 import styles from "./Controls.module.scss";
 import { MinusIcon } from "../../SVG/MinusIcon";
 import { extractArguments } from "./Sanitize";
@@ -122,12 +122,13 @@ export const CompositeControl: FC<CompositeControlProps> = ({
 							nodeTable={nodeTable}
 							windowWidth={windowWidth}
 							setValueAndHeight={(newValue, newHeight) => {
-								const newControl = { ...children[uuid] };
+								const newControl = deepCopy(children[uuid]);
 								newControl.content = newValue;
 								newControl.renderHeight =
 									newHeight ?? children[uuid].renderHeight;
-								children[uuid] = newControl;
-								setValue(children);
+								const newChildren = deepCopy(children);
+								newChildren[uuid] = newControl;
+								setValue(newChildren);
 							}}
 							pickUpControl={pickUpControl}
 							setSelectedField={setSelectedField}

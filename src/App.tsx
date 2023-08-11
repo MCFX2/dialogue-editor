@@ -15,6 +15,7 @@ import * as uuid from "uuid";
 import { Canvas } from "./components/Canvas/Canvas";
 import {
 	FilesystemState,
+	autosave,
 	deleteScreen,
 	initWorkspace,
 	renameScreen,
@@ -35,6 +36,10 @@ export interface NodeHandle {
 	width: number;
 }
 
+export const deepCopy = (obj: any): any => {
+	return JSON.parse(JSON.stringify(obj));
+};
+
 function App() {
 	// some people might say "this is a lot of state for one component"
 	// to which i say "yes, yes it is"
@@ -53,6 +58,8 @@ function App() {
 	const [IOState, setIOState] = useState<FilesystemState>({});
 
 	const [unsaved, setUnsaved] = useState(false);
+	const [lastSavedScreen, setLastSavedScreen] = useState<NodeHandle[]>([]); // so if we undo back to the last saved screen, it's no longer unsaved
+	const autoUnsaved = useRef(false);
 
 	const [currentModal, setCurrentModal] = useState<"composite" | undefined>(
 		undefined
@@ -63,10 +70,64 @@ function App() {
 	const unsavedModalName = useRef("");
 
 	const [screen, updateScreen] = useState<NodeHandle[]>([]);
+	const undoStack = useRef<NodeHandle[][]>([]);
+	const redoStack = useRef<NodeHandle[][]>([]);
 
 	// keep track of whether the user is typing in a text field
 	// so we can disable keyboard shortcuts
 	const [selectedField, setSelectedField] = useState("");
+
+	const timeOut = useRef<NodeJS.Timeout | undefined>(undefined);
+
+	const applyChange = (oldScreen: NodeHandle[], newScreen: NodeHandle[]) => {
+		undoStack.current.push(oldScreen);
+		!unsaved && setUnsaved(true);
+		autoUnsaved.current = true;
+		updateScreen(newScreen);
+		redoStack.current = [];
+	};
+
+	const undo = () => {
+		if (undoStack.current.length > 0) {
+			const last = undoStack.current.pop();
+			if (last !== undefined) {
+				redoStack.current.push(deepCopy(screen));
+				updateScreen(last);
+				if (JSON.stringify(last) === JSON.stringify(lastSavedScreen)) {
+					setUnsaved(false);
+				}
+			}
+		}
+	};
+
+	const redo = () => {
+		if (redoStack.current.length > 0) {
+			const last = redoStack.current.pop();
+			if (last !== undefined) {
+				undoStack.current.push(deepCopy(screen));
+				updateScreen(last);
+				if (JSON.stringify(last) === JSON.stringify(lastSavedScreen)) {
+					setUnsaved(false);
+				}
+			}
+		}
+	};
+
+	// autosave every 2 minutes
+	useEffect(() => {
+		timeOut.current = setInterval(async () => {
+			const filename = IOState.currentScreenFile?.name ?? "untitled.json";
+			if (autoUnsaved.current) {
+				setIOState(await autosave(IOState, screen, filename));
+				autoUnsaved.current = false;
+			}
+		}, 1000 * 60 * 2);
+		return () => {
+			if (timeOut.current !== undefined) {
+				clearInterval(timeOut.current);
+			}
+		};
+	});
 
 	// click and drag to move the background
 	// we also hijack these hooks for parts of the node drag and drop feature
@@ -115,18 +176,17 @@ function App() {
 		if (e.button === 0) {
 			grabbing && setGrabbing(false);
 			if (draggingControl !== undefined) {
+				const oldScreen = deepCopy(screen);
 				if (
 					targetNode !== undefined &&
 					targetNode.uuid !== draggingControl.parent
 				) {
 					// configure the control
 					draggingControl.content = targetNode.uuid;
-					updateScreen([...screen]);
-					!unsaved && setUnsaved(true);
+					applyChange(oldScreen, screen);
 				} else {
 					draggingControl.content = undefined;
-					updateScreen([...screen]);
-					!unsaved && setUnsaved(true);
+					applyChange(oldScreen, screen);
 				}
 				setDraggingControl(undefined);
 			}
@@ -139,8 +199,8 @@ function App() {
 	};
 
 	const makeNode = (screenPosition: { x: number; y: number }) => {
-		!unsaved && setUnsaved(true);
-		updateScreen([
+		const oldScreen = deepCopy(screen);
+		applyChange(oldScreen, [
 			...screen,
 			{
 				name: "Empty Node",
@@ -170,13 +230,19 @@ function App() {
 				.then((fileHandle) => {
 					fileHandle.getFile().then((file) => {
 						file.text().then((text) => {
-							updateScreen(JSON.parse(text));
+							const scr = JSON.parse(text);
+							undoStack.current = [];
+							redoStack.current = [];
+							updateScreen(scr);
+							setUnsaved(false);
+							autoUnsaved.current = false;
+							setLastSavedScreen(deepCopy(scr));
+
 							setIOState((old) => {
 								old.currentScreenFile = fileHandle;
 								return old;
 							});
 							setCameraPosition({ x: 0, y: 0 });
-							unsaved && setUnsaved(false);
 						});
 					});
 				})
@@ -190,6 +256,8 @@ function App() {
 		try {
 			setIOState(await saveScreen(IOState, screen, "untitled.json"));
 			unsaved && setUnsaved(false);
+			setLastSavedScreen(screen);
+			autoUnsaved.current = false;
 		} catch (e) {
 			console.log(e);
 		}
@@ -206,6 +274,16 @@ function App() {
 			if (e.ctrlKey && e.key.toLowerCase() === "s") {
 				e.preventDefault(); // suppress browser save dialog
 				saveAction();
+			}
+
+			if (e.ctrlKey && e.key.toLowerCase() === "z") {
+				e.preventDefault();
+				undo();
+			}
+
+			if (e.ctrlKey && e.key.toLowerCase() === "y") {
+				e.preventDefault();
+				redo();
 			}
 
 			// load
@@ -397,6 +475,10 @@ function App() {
 							const newState = await deleteScreen(IOState, file);
 							if (screenWasOpen && newState.currentScreenFile === undefined) {
 								updateScreen([]);
+								undoStack.current = [];
+								setLastSavedScreen([]);
+								setUnsaved(false);
+								autoUnsaved.current = false;
 							}
 							setIOState(newState);
 						};
@@ -487,41 +569,35 @@ function App() {
 									controlCandidates={controlCandidates}
 									key={node.uuid}
 									addControl={(control) => {
-										const newControl = { ...control };
+										const oldScreen = deepCopy(screen);
+										const newControl = deepCopy(control);
 										newControl.uuid = uuid.v4();
-										console.log(
-											"setting parent to " +
-												node.uuid +
-												" for " +
-												newControl.uuid
-										);
 										recursiveSetParent(newControl, node.uuid);
 										node.controls.push(newControl);
 										recalculateIndices(node);
-										!unsaved && setUnsaved(true);
-										updateScreen([...screen]);
+										applyChange(oldScreen, [...screen]);
 									}}
 									updateControl={(uuid, newControl) => {
+										const oldScreen = deepCopy(screen);
 										node.controls[
 											node.controls.findIndex((e) => e.uuid === uuid)
 										] = newControl;
 										recalculateIndices(node);
-										!unsaved && setUnsaved(true);
-										updateScreen([...screen]);
+										applyChange(oldScreen, [...screen]);
 									}}
 									removeControl={(uuid) => {
+										const oldScreen = deepCopy(screen);
 										node.controls = node.controls.filter(
 											(c) => c.uuid !== uuid
 										);
 										// recalculate indices
 										recalculateIndices(node);
-										!unsaved && setUnsaved(true);
-										updateScreen([...screen]);
+										applyChange(oldScreen, [...screen]);
 									}}
 									setTitle={(title) => {
+										const oldScreen = deepCopy(screen);
 										node.name = title;
-										!unsaved && setUnsaved(true);
-										updateScreen([...screen]);
+										applyChange(oldScreen, [...screen]);
 									}}
 									controls={node.controls}
 									renderPosition={{
@@ -529,30 +605,31 @@ function App() {
 										y: cameraPosition.y + node.worldPosition.y,
 									}}
 									setRenderPosition={(newPos) => {
+										const oldScreen = deepCopy(screen);
 										node.worldPosition = {
 											x: newPos.x - cameraPosition.x,
 											y: newPos.y - cameraPosition.y,
 										};
-										!unsaved && setUnsaved(true);
-										updateScreen([...screen]);
+										applyChange(oldScreen, [...screen]);
 									}}
 									deleteNode={() => {
+										const oldScreen = deepCopy(screen);
 										// break all connections to this node
 										for (const field of allNodeConnections) {
 											if (field.content === node.uuid) {
 												field.content = undefined;
 											}
 										}
-										!unsaved && setUnsaved(true);
-										updateScreen([
-											...screen.filter((n) => n.uuid !== node.uuid),
-										]);
+										applyChange(
+											oldScreen,
+											screen.filter((n) => n.uuid !== node.uuid)
+										);
 									}}
 									width={node.width}
 									setWidth={(newWidth) => {
+										const oldScreen = deepCopy(screen);
 										node.width = newWidth;
-										!unsaved && setUnsaved(true);
-										updateScreen([...screen]);
+										applyChange(oldScreen, [...screen]);
 									}}
 									pickUpControl={pickUpControl}
 									title={node.name}
@@ -568,17 +645,20 @@ function App() {
 					)}
 				</div>
 				{currentModal && (
-					<Modal closeModal={() => {
-						if(unsavedModal) {
-							return;
-						}
+					<Modal
+						closeModal={() => {
+							if (unsavedModal) {
+								return;
+							}
 
-						unsavedModalConfirmAction.current = () => {
-							setCurrentModal(undefined);
-						}
-						unsavedModalName.current = "Closing this modal will discard the composite without saving it.";
-						setUnsavedModal(true);
-					}}>
+							unsavedModalConfirmAction.current = () => {
+								setCurrentModal(undefined);
+							};
+							unsavedModalName.current =
+								"Closing this modal will discard the composite without saving it.";
+							setUnsavedModal(true);
+						}}
+					>
 						{currentModal === "composite" ? (
 							<CompositeModal
 								existingComposites={IOState.compositeList ?? []}

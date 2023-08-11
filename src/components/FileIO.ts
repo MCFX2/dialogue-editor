@@ -14,6 +14,8 @@ export interface FilesystemState {
 	screenFileList?: FileSystemFileHandle[];
 	compositeFileList?: FileSystemFileHandle[];
 	compositeList?: Composite[];
+
+	autosaveDirectory?: FileSystemDirectoryHandle;
 }
 
 // Initializes the workspace if it's not initialized already.
@@ -23,6 +25,18 @@ async function ensureWorkspaceInitialized(IOState: Readonly<FilesystemState>) {
 	}
 
 	return IOState;
+}
+
+async function ensureAutosaveDirectoryInitialized(
+	IOState: Readonly<FilesystemState>
+) {
+	let newState = await ensureScreenDirectoryInitialized(IOState);
+
+	if (!newState.autosaveDirectory) {
+		newState = await loadAutosaveDirectory(newState);
+	}
+
+	return newState;
 }
 
 // Initializes the screen directory if it's not initialized already. Initializes the workspace too if necessary.
@@ -78,6 +92,27 @@ async function moveViaHandle(
 	}
 
 	return Promise.reject("Failed to move file");
+}
+
+// Loads the autosave directory. Does not initialize anything else,
+// and will fail silently if the screen directory isn't initialized.
+async function loadAutosaveDirectory(IOState: Readonly<FilesystemState>) {
+	console.assert(
+		IOState.screenDirectoryHandle,
+		"Tried to load autosave directory when screen directory not initialized"
+	);
+	if (!IOState.screenDirectoryHandle) {
+		return IOState;
+	}
+
+	const newState = { ...IOState };
+
+	newState.autosaveDirectory =
+		await IOState.screenDirectoryHandle.getDirectoryHandle("autosave", {
+			create: true,
+		});
+
+	return newState;
 }
 
 // Loads the screen directory. Does not initialize anything else,
@@ -364,4 +399,37 @@ export async function saveComposite(
 
 	newState = await generateCompositeFileList(newState);
 	return await generateCompositeList(newState);
+}
+
+export async function autosave(
+	IOState: Readonly<FilesystemState>,
+	screen: NodeHandle[],
+	screenName: string
+) {
+	// don't autosave if the workspace wasn't initialized
+	// (this avoids prompting the user seemingly at random when they first open the app)
+	if (!IOState.workspaceHandle) {
+		return IOState;
+	}
+
+	let newState = await ensureAutosaveDirectoryInitialized(IOState);
+
+	const dateFilename = Date.now().toString();
+
+	const newHandle = await newState.autosaveDirectory?.getFileHandle(
+		`${dateFilename}-${screenName}`,
+		{
+			create: true,
+		}
+	);
+
+	if (!newHandle) {
+		return newState;
+	}
+
+	const writer = await newHandle.createWritable();
+	await writer.write(JSON.stringify(screen));
+	await writer.close();
+
+	return newState;
 }

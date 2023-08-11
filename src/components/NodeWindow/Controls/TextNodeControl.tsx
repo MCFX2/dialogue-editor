@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import { NodeControl } from "../NodeControl";
 import styles from "./Controls.module.scss";
 import { extractArguments } from "./Sanitize";
@@ -34,6 +34,8 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 	forceInvalid = false,
 	blockEdit = false,
 }) => {
+	const [text, setText] = useState<string | undefined>(undefined);
+
 	const args = extractArguments(restrictionId);
 
 	let valid = !forceInvalid;
@@ -47,11 +49,11 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 
 	const allowEdit = args["disabled"] !== "true";
 
-	return (!blockEdit && allowEdit) ? (
+	return !blockEdit && allowEdit ? (
 		<input
 			className={valid ? styles.textField : styles.textFieldInvalid}
 			placeholder='""'
-			value={value ?? ""}
+			value={text ?? value ?? ""}
 			onChange={(e) => {
 				let newValue = e.target.value;
 				if (args["maxLength"] !== undefined) {
@@ -60,7 +62,7 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 					}
 				}
 
-				setValue(newValue);
+				setText(newValue);
 			}}
 			type={"text"}
 			style={{
@@ -68,9 +70,12 @@ export const TextNodeControl: FC<TextNodeControlProps> = ({
 			}}
 			onFocus={() => {
 				setSelectedField(true);
+				setText(value);
 			}}
 			onBlur={() => {
 				setSelectedField(false);
+				setValue(text!);
+				setText(undefined);
 			}}
 		/>
 	) : (
