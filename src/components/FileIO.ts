@@ -4,6 +4,7 @@
 
 import { NodeHandle } from "../App";
 import { Composite } from "./Modals/Composite/CompositeModal";
+import { NodeControl } from "./NodeWindow/NodeControl";
 
 export interface FilesystemState {
 	workspaceHandle?: FileSystemDirectoryHandle;
@@ -432,4 +433,173 @@ export async function autosave(
 	await writer.close();
 
 	return newState;
+}
+
+export async function deleteComposite(
+	IOState: Readonly<FilesystemState>,
+	name: string
+) {
+	const handle = IOState.compositeFileList?.find((f) => f.name === name);
+	console.assert(handle, "Tried to delete composite that doesn't exist");
+
+	if (!handle) {
+		return IOState;
+	}
+
+	let newState = { ...IOState };
+
+	await newState.compositeDirectoryHandle?.removeEntry(name);
+
+	return await generateCompositeFileList(newState);
+}
+
+export interface ExportOptions {
+	// compact mode minimizes the space taken up, pretty is more human-readable
+	mode?: "compact" | "pretty";
+	// if true, nodes with no fields will be excluded.
+	// by default, nodes with no content are excluded (true).
+	trimEmptyNodes?: boolean;
+
+	// if true, fields left with default values will be excluded.
+	// by default, empty fields are included with default values (false).
+
+	// note that when this is true, we trim empty fields recursively.
+	// if you have an array containing only empty fields, the array itself will be excluded.
+	// this will break any assumptions you make about the structure of the exported data, but it can be significantly
+	// more compact. I recommend handling this case in your json handling code rather than disabling this option,
+	// but it's left disabled by default because this optimization can be surprising.
+	trimEmptyFields?: boolean;
+	// if true, fields that don't have labels will be included (they'll be given a label of "").
+	// by default, fields without labels are excluded (false).
+	allowEmptyLabels?: boolean;
+}
+
+function recursiveExportControl(node: NodeControl, options: ExportOptions) {
+	if (node.type === "composite") {
+		const composite: { [key: string]: any } = {};
+		for (const [key, value] of Object.entries(node.content)) {
+			const result = recursiveExportControl(value as NodeControl, options);
+			if (options.trimEmptyFields && result === undefined) {
+				continue;
+			} else {
+				// don't check for empty labels here, it's not possible for composite fields to be missing labels
+				composite[(value as NodeControl).label] = result;
+			}
+		}
+		if (Object.keys(composite).length === 0 && options.trimEmptyFields) {
+			return undefined;
+		}
+		return composite;
+	} else if (node.type === "array") {
+		const output: any[] = node.content.map((v: NodeControl) =>
+			recursiveExportControl(v, options)
+		);
+		if (options.trimEmptyFields) {
+			const filtered = output.filter((v) => v !== undefined);
+			if (filtered.length === 0) {
+				return undefined;
+			}
+			return filtered;
+		}
+		return output;
+	} else if (node.type === "boolean") {
+		if (node.content === "" || node.content === false) {
+			return false;
+		}
+		return true;
+	} else if (node.type === "number") {
+		if (node.content === "") {
+			return options.trimEmptyFields ? undefined : 0;
+		}
+
+		return parseFloat(node.content);
+	} else {
+		// node type is text-based
+		if (node.content === "" && options.trimEmptyFields) {
+			return undefined;
+		}
+
+		return node.content;
+	}
+}
+
+// if you want to change the export behavior,
+// change the options structure that gets passed here from App.tsx.
+export async function exportScreen(
+	IOState: Readonly<FilesystemState>,
+	screen: NodeHandle[],
+	options: ExportOptions = {
+		mode: "pretty",
+		trimEmptyNodes: true,
+		trimEmptyFields: false,
+		allowEmptyLabels: false,
+	}
+): Promise<void> {
+	// prompt user for save location
+	const fileHandle = await window
+		.showSaveFilePicker({
+			suggestedName: "screen.json",
+			types: [
+				{
+					description: "JSON",
+					accept: {
+						"application/json": [".json"],
+					},
+				},
+			],
+		})
+		.catch(() => {
+			// user cancelled
+			return undefined;
+		});
+
+	if (!fileHandle) {
+		return;
+	}
+
+	const writer = await fileHandle.createWritable();
+	// convert screen to the export format
+	const exportScreen: { [uuid: string]: any } = {};
+
+	for (const node of screen) {
+		if (!node.controls) {
+			if (!options.trimEmptyNodes) {
+				exportScreen[node.uuid] = {};
+			}
+			continue;
+		}
+
+		const exportNode: { [uuid: string]: any } = {};
+
+		if (options.trimEmptyNodes && node.controls.length === 0) {
+			continue;
+		}
+
+		for (const control of node.controls) {
+			if (!options.allowEmptyLabels && control.label === "") {
+				continue;
+			}
+
+			const recursiveExport = recursiveExportControl(control, options);
+			if (options.trimEmptyFields && recursiveExport === undefined) {
+				continue;
+			}
+			exportNode[control.label] = recursiveExport;
+		}
+
+		if (Object.keys(exportNode).length === 0 && options.trimEmptyNodes) {
+			continue;
+		}
+
+		exportScreen[node.uuid] = exportNode;
+	}
+
+	await writer.write(
+		JSON.stringify(
+			exportScreen,
+			undefined,
+			options.mode === "compact" ? undefined : "\t"
+		)
+	);
+	await writer.close();
 }

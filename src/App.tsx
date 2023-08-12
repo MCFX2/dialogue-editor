@@ -17,6 +17,7 @@ import {
 	FilesystemState,
 	autosave,
 	deleteScreen,
+	exportScreen,
 	initWorkspace,
 	renameScreen,
 	saveComposite,
@@ -95,6 +96,8 @@ function App() {
 				updateScreen(last);
 				if (JSON.stringify(last) === JSON.stringify(lastSavedScreen)) {
 					setUnsaved(false);
+				} else {
+					setUnsaved(true);
 				}
 			}
 		}
@@ -108,6 +111,8 @@ function App() {
 				updateScreen(last);
 				if (JSON.stringify(last) === JSON.stringify(lastSavedScreen)) {
 					setUnsaved(false);
+				} else {
+					setUnsaved(true);
 				}
 			}
 		}
@@ -487,7 +492,15 @@ function App() {
 					createScreen={createScreen}
 					createNewNode={makeNode}
 					openCompositeModal={() => {
-						setCurrentModal("composite");
+						!currentModal && setCurrentModal("composite");
+					}}
+					openExportModal={() => {
+						exportScreen(IOState, screen, {
+							mode: "pretty",
+							allowEmptyLabels: false,
+							trimEmptyFields: true,
+							trimEmptyNodes: true,
+						});
 					}}
 					loadWorkspace={async () => {
 						if (unsavedModal) {

@@ -11,6 +11,7 @@ import { SaveIcon } from "../SVG/SaveIcon";
 import { LoadIcon } from "../SVG/LoadIcon";
 import { useMouseMove } from "../MouseUtils/UseMouseMove";
 import { ScreensMenu } from "./ScreensMenu";
+import { ExportIcon } from "../SVG/ExportIcon";
 
 export interface SidebarProps {
 	createNewNode: (pos: { x: number; y: number }) => void;
@@ -28,10 +29,10 @@ export interface SidebarProps {
 
 	setSelectedField: (uuid: string, oldUuid?: string) => void;
 
-
 	suppressKeyboardShortcuts: boolean;
 
 	openCompositeModal: () => void;
+	openExportModal: () => void;
 }
 
 interface SidebarHeadingProps {
@@ -77,6 +78,7 @@ export const AppSidebar: FC<SidebarProps> = ({
 	setSelectedField,
 	suppressKeyboardShortcuts,
 	openCompositeModal,
+	openExportModal,
 }) => {
 	const [collapsed, setCollapsed] = useState(false);
 
@@ -122,7 +124,7 @@ export const AppSidebar: FC<SidebarProps> = ({
 						<Menu
 							menuItemStyles={{
 								button: {
-									paddingLeft: '20px',
+									paddingLeft: "20px",
 									":hover": {
 										backgroundColor: "#00254b",
 									},
@@ -134,14 +136,14 @@ export const AppSidebar: FC<SidebarProps> = ({
 								onClick={saveWorkspace}
 								className={styles.mainMenuButton}
 							>
-								Save Screen (Ctrl+S)
+								Save Screen
 							</MenuItem>
 							<MenuItem
 								icon={<LoadIcon size={28} />}
 								onClick={loadWorkspace}
 								className={styles.mainMenuButton}
 							>
-								Load Workspace (Ctrl+O)
+								Open Workspace
 							</MenuItem>
 							<ScreensMenu
 								collapsed={collapsed}
@@ -154,6 +156,13 @@ export const AppSidebar: FC<SidebarProps> = ({
 								unsaved={unsaved}
 								deleteScreen={deleteScreen}
 							/>
+							<MenuItem
+								icon={<ExportIcon size={28} />}
+								className={styles.mainMenuButton}
+								onClick={openExportModal}
+							>
+								Export
+							</MenuItem>
 						</Menu>
 
 						<SidebarHeading collapsed={collapsed} text="Edit" />
@@ -166,7 +175,7 @@ export const AppSidebar: FC<SidebarProps> = ({
 								}}
 								className={styles.mainMenuButton}
 							>
-								New Node (Shift+E)
+								New Node
 							</MenuItem>
 							<MenuItem
 								icon={<PlusIcon1 size={32} />}
@@ -192,7 +201,7 @@ export const AppSidebar: FC<SidebarProps> = ({
 						</button>
 					</div>
 					<div className={styles.legalText}>
-						{"v0.6-beta" + (collapsed ? "" : " (c) 2023 Rozalily")}
+						{"v0.6-rc1" + (collapsed ? "" : " (c) 2023 Rozalily")}
 						<p>{collapsed ? "EVALUATION" : "For evaluation purposes only."}</p>
 					</div>
 				</div>
