@@ -477,7 +477,7 @@ export interface ExportOptions {
 function recursiveExportControl(node: NodeControl, options: ExportOptions) {
 	if (node.type === "composite") {
 		const composite: { [key: string]: any } = {};
-		for (const [key, value] of Object.entries(node.content)) {
+		for (const [, value] of Object.entries(node.content)) {
 			const result = recursiveExportControl(value as NodeControl, options);
 			if (options.trimEmptyFields && result === undefined) {
 				continue;

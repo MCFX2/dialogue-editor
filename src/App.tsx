@@ -498,7 +498,7 @@ function App() {
 						exportScreen(IOState, screen, {
 							mode: "pretty",
 							allowEmptyLabels: false,
-							trimEmptyFields: true,
+							trimEmptyFields: false,
 							trimEmptyNodes: true,
 						});
 					}}

@@ -115,7 +115,11 @@ export const AppSidebar: FC<SidebarProps> = ({
 				<div className={styles.sidebarContainer}>
 					<div className={styles.sidebarHeader}>
 						<div style={{ display: "flex", alignItems: "center" }}>
-							<div className={styles.headerLogo}>O/</div>
+							<img
+								className={styles.headerLogo}
+								src={"/logo128.png"}
+								alt={"Nodedit Logo"}
+							/>
 							<p className={styles.subtitle}>Nodedit</p>
 						</div>
 					</div>
@@ -201,7 +205,7 @@ export const AppSidebar: FC<SidebarProps> = ({
 						</button>
 					</div>
 					<div className={styles.legalText}>
-						{"v0.6-rc1" + (collapsed ? "" : " (c) 2023 Rozalily")}
+						{"v0.6" + (collapsed ? "" : " (c) 2023 Rozalily")}
 						<p>{collapsed ? "EVALUATION" : "For evaluation purposes only."}</p>
 					</div>
 				</div>
