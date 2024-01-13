@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { AppSidebar } from "./components/Sidebar/Sidebar";
 import styles from "./App.module.scss";
 import { useMouseMove } from "./components/MouseUtils/UseMouseMove";
@@ -28,6 +28,7 @@ import { Background } from "./components/Background/Background";
 import { CompositeModal } from "./components/Modals/Composite/CompositeModal";
 import { DefaultCompositeControl } from "./components/NodeWindow/Controls/CompositeControl";
 import { UnsavedModal } from "./components/Modals/Unsaved/UnsavedModal";
+import { useState } from "./components/SafeUseState";
 
 export interface NodeHandle {
 	name: string;
@@ -48,7 +49,7 @@ function App() {
 	// without adding a lot of complexity
 
 	const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
-	const [grabbing, setGrabbing] = useState(false);
+	const grabbing = useRef(false);
 	const [draggingControl, setDraggingControl] = useState<
 		NodeControl | undefined
 	>(undefined);
@@ -58,7 +59,7 @@ function App() {
 
 	const [IOState, setIOState] = useState<FilesystemState>({});
 
-	const [unsaved, setUnsaved] = useState(false);
+	const [unsaved, setUnsaved] = useState<Readonly<boolean>>(false);
 	const [lastSavedScreen, setLastSavedScreen] = useState<NodeHandle[]>([]); // so if we undo back to the last saved screen, it's no longer unsaved
 	const autoUnsaved = useRef(false);
 
@@ -168,7 +169,7 @@ function App() {
 					setTargetNode(topNode);
 				}
 			}
-		} else if (grabbing) {
+		} else if (grabbing.current) {
 			e.preventDefault();
 			setCameraPosition((prev) => ({
 				x: prev.x + e.movementX,
@@ -179,7 +180,7 @@ function App() {
 
 	useMouseRelease((e) => {
 		if (e.button === 0) {
-			grabbing && setGrabbing(false);
+			grabbing.current = false;
 			if (draggingControl !== undefined) {
 				const oldScreen = deepCopy(screen);
 				if (
@@ -200,7 +201,7 @@ function App() {
 
 	const pickUpControl = (node: NodeControl) => {
 		setDraggingControl(node);
-		grabbing && setGrabbing(false);
+		grabbing.current = false;
 	};
 
 	const makeNode = (screenPosition: { x: number; y: number }) => {
@@ -565,7 +566,7 @@ function App() {
 					className={styles.mainContainer}
 					onMouseDown={(e) => {
 						if (e.target === e.currentTarget && e.button === 0)
-							setGrabbing(true);
+							grabbing.current = true;
 					}}
 					onScroll={() => {
 						if (fieldRef.current) {
